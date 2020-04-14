@@ -22,7 +22,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import androidx.core.content.FileProvider;
-
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.ImageLoader;
@@ -64,7 +63,7 @@ public class ImageUpdater implements NotificationCenter.NotificationCenterDelega
     private TLRPC.PhotoSize bigPhoto;
     private TLRPC.PhotoSize smallPhoto;
     public String uploadingImage;
-    private File picturePath = null;
+    public String picturePath;
     private String finalPath;
     private boolean clearAfterUpdate;
 
@@ -207,12 +206,14 @@ public class ImageUpdater implements NotificationCenter.NotificationCenterDelega
             Bitmap bitmap = null;
             if (info.path != null) {
                 bitmap = ImageLoader.loadBitmap(info.path, null, 800, 800, true);
+                picturePath = info.path;
             } else if (info.searchImage != null) {
                 if (info.searchImage.photo != null) {
                     TLRPC.PhotoSize photoSize = FileLoader.getClosestPhotoSizeWithSize(info.searchImage.photo.sizes, AndroidUtilities.getPhotoSize());
                     if (photoSize != null) {
                         File path = FileLoader.getPathToAttach(photoSize, true);
                         finalPath = path.getAbsolutePath();
+                        picturePath = finalPath;
                         if (!path.exists()) {
                             path = FileLoader.getPathToAttach(photoSize, false);
                             if (!path.exists()) {
@@ -232,6 +233,7 @@ public class ImageUpdater implements NotificationCenter.NotificationCenterDelega
                     String md5 = Utilities.MD5(info.searchImage.imageUrl) + "." + ImageLoader.getHttpUrlExtension(info.searchImage.imageUrl, "jpg");
                     File cacheFile = new File(FileLoader.getDirectory(FileLoader.MEDIA_DIR_CACHE), md5);
                     finalPath = cacheFile.getAbsolutePath();
+                    picturePath = finalPath;
                     if (cacheFile.exists() && cacheFile.length() != 0) {
                         bitmap = ImageLoader.loadBitmap(cacheFile.getAbsolutePath(), null, 800, 800, true);
                     } else {
@@ -378,6 +380,7 @@ public class ImageUpdater implements NotificationCenter.NotificationCenterDelega
                     }
                 }, null);
                 AndroidUtilities.addMediaToGallery(currentPicturePath);
+                picturePath = currentPicturePath;
                 currentPicturePath = null;
             } else if (requestCode == 14) {
                 if (data == null || data.getData() == null) {

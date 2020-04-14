@@ -96,7 +96,6 @@ EchoCanceller::~EchoCanceller(){
 #ifndef TGVOIP_NO_DSP
 	delete apm;
 	delete audioFrame;
-	delete farendBufferPool;
 #endif
 }
 

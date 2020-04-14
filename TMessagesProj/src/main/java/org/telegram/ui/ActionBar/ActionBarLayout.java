@@ -42,7 +42,6 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
-import org.telegram.ui.Components.Bulletin;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
 
@@ -472,7 +471,7 @@ public class ActionBarLayout extends FrameLayout {
             LayoutContainer temp = containerView;
             containerView = containerViewBack;
             containerViewBack = temp;
-            bringContainerViewToFront();
+            bringChildToFront(containerView);
 
             lastFragment = fragmentsStack.get(fragmentsStack.size() - 1);
             currentActionBar = lastFragment.actionBar;
@@ -622,13 +621,13 @@ public class ActionBarLayout extends FrameLayout {
                         if (!backAnimation) {
                             distToMove = containerView.getMeasuredWidth() - x;
                             animatorSet.playTogether(
-                                    ObjectAnimator.ofFloat(containerView, View.TRANSLATION_X, containerView.getMeasuredWidth()),
+                                    ObjectAnimator.ofFloat(containerView, "translationX", containerView.getMeasuredWidth()),
                                     ObjectAnimator.ofFloat(this, "innerTranslationX", (float) containerView.getMeasuredWidth())
                             );
                         } else {
                             distToMove = x;
                             animatorSet.playTogether(
-                                    ObjectAnimator.ofFloat(containerView, View.TRANSLATION_X, 0),
+                                    ObjectAnimator.ofFloat(containerView, "translationX", 0),
                                     ObjectAnimator.ofFloat(this, "innerTranslationX", 0.0f)
                             );
                         }
@@ -928,7 +927,7 @@ public class ActionBarLayout extends FrameLayout {
             Theme.moveUpDrawable.setAlpha(0);
         }
 
-        bringContainerViewToFront();
+        bringChildToFront(containerView);
         if (!needAnimation) {
             presentFragmentInternalRemoveOld(removeLast, currentFragment);
             if (backgroundView != null) {
@@ -1104,18 +1103,7 @@ public class ActionBarLayout extends FrameLayout {
         fragment.setParentLayout(null);
         fragmentsStack.remove(fragment);
         containerViewBack.setVisibility(View.INVISIBLE);
-        bringContainerViewToFront();
-    }
-
-    private void bringContainerViewToFront() {
         bringChildToFront(containerView);
-        if (getChildCount() > 2) {
-            final Bulletin bulletin = Bulletin.find(this);
-            if (bulletin != null) {
-                bulletin.getLayout().bringToFront();
-                bulletin.hide();
-            }
-        }
     }
 
     public void movePreviewFragment(float dy) {
@@ -1415,9 +1403,6 @@ public class ActionBarLayout extends FrameLayout {
         if (useAlphaAnimations && fragmentsStack.size() == 1 && AndroidUtilities.isTablet()) {
             closeLastFragment(true);
         } else {
-            if (delegate != null && fragmentsStack.size() == 1 && AndroidUtilities.isTablet()) {
-                delegate.needCloseLastFragment(this);
-            }
             removeFragmentFromStackInternal(fragment);
         }
     }

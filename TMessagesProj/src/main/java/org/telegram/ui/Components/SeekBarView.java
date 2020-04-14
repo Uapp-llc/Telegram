@@ -17,7 +17,6 @@ import android.os.Build;
 import android.os.SystemClock;
 import android.util.StateSet;
 import android.view.MotionEvent;
-import android.view.ViewConfiguration;
 import android.widget.FrameLayout;
 
 import org.telegram.messenger.AndroidUtilities;
@@ -33,7 +32,7 @@ public class SeekBarView extends FrameLayout {
     private int thumbDX;
     private float progressToSet;
     private boolean pressed;
-    public SeekBarViewDelegate delegate;
+    private SeekBarViewDelegate delegate;
     private boolean reportChanges;
     private float bufferedProgress;
     private Drawable hoverDrawable;
@@ -104,15 +103,30 @@ public class SeekBarView extends FrameLayout {
         delegate = seekBarViewDelegate;
     }
 
-    boolean captured;
-    float sx, sy;
     boolean onTouch(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-            sx = ev.getX();
-            sy = ev.getY();
-            return true;
+            getParent().requestDisallowInterceptTouchEvent(true);
+            int additionWidth = (getMeasuredHeight() - thumbSize) / 2;
+            if (ev.getY() >= 0 && ev.getY() <= getMeasuredHeight()) {
+                if (!(thumbX - additionWidth <= ev.getX() && ev.getX() <= thumbX + thumbSize + additionWidth)) {
+                    thumbX = (int) ev.getX() - thumbSize / 2;
+                    if (thumbX < 0) {
+                        thumbX = 0;
+                    } else if (thumbX > getMeasuredWidth() - selectorWidth) {
+                        thumbX = getMeasuredWidth() - selectorWidth;
+                    }
+                }
+                thumbDX = (int) (ev.getX() - thumbX);
+                pressed = true;
+                delegate.onSeekBarPressed(true);
+                if (Build.VERSION.SDK_INT >= 21 && hoverDrawable != null) {
+                    hoverDrawable.setState(pressedState);
+                    hoverDrawable.setHotspot(ev.getX(), ev.getY());
+                }
+                invalidate();
+                return true;
+            }
         } else if (ev.getAction() == MotionEvent.ACTION_UP || ev.getAction() == MotionEvent.ACTION_CANCEL) {
-            captured = false;
             if (pressed) {
                 if (ev.getAction() == MotionEvent.ACTION_UP) {
                     delegate.onSeekBarDrag(true, (float) thumbX / (float) (getMeasuredWidth() - selectorWidth));
@@ -126,61 +140,27 @@ public class SeekBarView extends FrameLayout {
                 return true;
             }
         } else if (ev.getAction() == MotionEvent.ACTION_MOVE) {
-            if (!captured) {
-                final ViewConfiguration vc = ViewConfiguration.get(getContext());
-                if (Math.abs(ev.getY() - sy) > vc.getScaledTouchSlop()) {
-                    return false;
+            if (pressed) {
+                thumbX = (int) (ev.getX() - thumbDX);
+                if (thumbX < 0) {
+                    thumbX = 0;
+                } else if (thumbX > getMeasuredWidth() - selectorWidth) {
+                    thumbX = getMeasuredWidth() - selectorWidth;
                 }
-                if (Math.abs(ev.getX() - sx) > vc.getScaledTouchSlop()) {
-                    captured = true;
-                    getParent().requestDisallowInterceptTouchEvent(true);
-                    int additionWidth = (getMeasuredHeight() - thumbSize) / 2;
-                    if (ev.getY() >= 0 && ev.getY() <= getMeasuredHeight()) {
-                        if (!(thumbX - additionWidth <= ev.getX() && ev.getX() <= thumbX + thumbSize + additionWidth)) {
-                            thumbX = (int) ev.getX() - thumbSize / 2;
-                            if (thumbX < 0) {
-                                thumbX = 0;
-                            } else if (thumbX > getMeasuredWidth() - selectorWidth) {
-                                thumbX = getMeasuredWidth() - selectorWidth;
-                            }
-                        }
-                        thumbDX = (int) (ev.getX() - thumbX);
-                        pressed = true;
-                        delegate.onSeekBarPressed(true);
-                        if (Build.VERSION.SDK_INT >= 21 && hoverDrawable != null) {
-                            hoverDrawable.setState(pressedState);
-                            hoverDrawable.setHotspot(ev.getX(), ev.getY());
-                        }
-                        invalidate();
-                        return true;
-                    }
+                if (reportChanges) {
+                    delegate.onSeekBarDrag(false, (float) thumbX / (float) (getMeasuredWidth() - selectorWidth));
                 }
-            } else {
-                if (pressed) {
-                    thumbX = (int) (ev.getX() - thumbDX);
-                    if (thumbX < 0) {
-                        thumbX = 0;
-                    } else if (thumbX > getMeasuredWidth() - selectorWidth) {
-                        thumbX = getMeasuredWidth() - selectorWidth;
-                    }
-                    if (reportChanges) {
-                        delegate.onSeekBarDrag(false, (float) thumbX / (float) (getMeasuredWidth() - selectorWidth));
-                    }
-                    if (Build.VERSION.SDK_INT >= 21 && hoverDrawable != null) {
-                        hoverDrawable.setHotspot(ev.getX(), ev.getY());
-                    }
-                    invalidate();
-                    return true;
+                if (Build.VERSION.SDK_INT >= 21 && hoverDrawable != null) {
+                    hoverDrawable.setHotspot(ev.getX(), ev.getY());
                 }
+                invalidate();
+                return true;
             }
         }
         return false;
     }
 
     public float getProgress() {
-        if (getMeasuredWidth() == 0) {
-            return progressToSet;
-        }
         return thumbX / (float) (getMeasuredWidth() - selectorWidth);
     }
 

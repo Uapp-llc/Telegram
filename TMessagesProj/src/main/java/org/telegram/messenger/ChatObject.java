@@ -16,6 +16,7 @@ public class ChatObject {
     public static final int CHAT_TYPE_CHANNEL = 2;
     public static final int CHAT_TYPE_USER = 3;
     public static final int CHAT_TYPE_MEGAGROUP = 4;
+    public static final int CHAT_TYPE_CHATEGORY = 5;
 
     public static final int ACTION_PIN = 0;
     public static final int ACTION_CHANGE_INFO = 1;

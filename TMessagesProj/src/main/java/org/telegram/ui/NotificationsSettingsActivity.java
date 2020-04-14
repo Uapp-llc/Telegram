@@ -393,9 +393,9 @@ public class NotificationsSettingsActivity extends BaseFragment implements Notif
                 }
 
                 NotificationsCheckCell checkCell = (NotificationsCheckCell) view;
-                enabled = getNotificationsController().isGlobalNotificationsEnabled(type);
+                enabled = NotificationsController.getInstance(currentAccount).isGlobalNotificationsEnabled(type);
                 if (LocaleController.isRTL && x <= AndroidUtilities.dp(76) || !LocaleController.isRTL && x >= view.getMeasuredWidth() - AndroidUtilities.dp(76)) {
-                    getNotificationsController().setGlobalNotificationsEnabled(type, !enabled ? 0 : Integer.MAX_VALUE);
+                    NotificationsController.getInstance(currentAccount).setGlobalNotificationsEnabled(type, !enabled ? 0 : Integer.MAX_VALUE);
                     showExceptionsAlert(position);
                     checkCell.setChecked(!enabled, 0);
                     adapter.notifyItemChanged(position);
@@ -441,7 +441,7 @@ public class NotificationsSettingsActivity extends BaseFragment implements Notif
                     reseting = true;
                     TLRPC.TL_account_resetNotifySettings req = new TLRPC.TL_account_resetNotifySettings();
                     ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-                        getMessagesController().enableJoined = true;
+                        MessagesController.getInstance(currentAccount).enableJoined = true;
                         reseting = false;
                         SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                         SharedPreferences.Editor editor = preferences.edit();
@@ -454,7 +454,6 @@ public class NotificationsSettingsActivity extends BaseFragment implements Notif
                             Toast toast = Toast.makeText(getParentActivity(), LocaleController.getString("ResetNotificationsText", R.string.ResetNotificationsText), Toast.LENGTH_SHORT);
                             toast.show();
                         }
-                        getMessagesStorage().updateMutedDialogsFiltersCounters();
                     }));
                 });
                 builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
@@ -488,7 +487,7 @@ public class NotificationsSettingsActivity extends BaseFragment implements Notif
                 enabled = preferences.getBoolean("EnableInChatSound", true);
                 editor.putBoolean("EnableInChatSound", !enabled);
                 editor.commit();
-                getNotificationsController().setInChatSoundEnabled(!enabled);
+                NotificationsController.getInstance(currentAccount).setInChatSoundEnabled(!enabled);
             } else if (position == inappPriorityRow) {
                 SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
@@ -522,28 +521,27 @@ public class NotificationsSettingsActivity extends BaseFragment implements Notif
             } else if (position == badgeNumberShowRow) {
                 SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
-                enabled = getNotificationsController().showBadgeNumber;
-                getNotificationsController().showBadgeNumber = !enabled;
-                editor.putBoolean("badgeNumber", getNotificationsController().showBadgeNumber);
+                enabled = NotificationsController.getInstance(currentAccount).showBadgeNumber;
+                NotificationsController.getInstance(currentAccount).showBadgeNumber = !enabled;
+                editor.putBoolean("badgeNumber", NotificationsController.getInstance(currentAccount).showBadgeNumber);
                 editor.commit();
-                getNotificationsController().updateBadge();
+                NotificationsController.getInstance(currentAccount).updateBadge();
             } else if (position == badgeNumberMutedRow) {
                 SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
-                enabled = getNotificationsController().showBadgeMuted;
-                getNotificationsController().showBadgeMuted = !enabled;
-                editor.putBoolean("badgeNumberMuted", getNotificationsController().showBadgeMuted);
+                enabled = NotificationsController.getInstance(currentAccount).showBadgeMuted;
+                NotificationsController.getInstance(currentAccount).showBadgeMuted = !enabled;
+                editor.putBoolean("badgeNumberMuted", NotificationsController.getInstance(currentAccount).showBadgeMuted);
                 editor.commit();
-                getNotificationsController().updateBadge();
-                getMessagesStorage().updateMutedDialogsFiltersCounters();
+                NotificationsController.getInstance(currentAccount).updateBadge();
             } else if (position == badgeNumberMessagesRow) {
                 SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
-                enabled = getNotificationsController().showBadgeMessages;
-                getNotificationsController().showBadgeMessages = !enabled;
-                editor.putBoolean("badgeNumberMessages", getNotificationsController().showBadgeMessages);
+                enabled = NotificationsController.getInstance(currentAccount).showBadgeMessages;
+                NotificationsController.getInstance(currentAccount).showBadgeMessages = !enabled;
+                editor.putBoolean("badgeNumberMessages", NotificationsController.getInstance(currentAccount).showBadgeMessages);
                 editor.commit();
-                getNotificationsController().updateBadge();
+                NotificationsController.getInstance(currentAccount).updateBadge();
             } else if (position == notificationsServiceConnectionRow) {
                 SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                 enabled = preferences.getBoolean("pushConnection", getMessagesController().backgroundConnection);
@@ -827,11 +825,11 @@ public class NotificationsSettingsActivity extends BaseFragment implements Notif
                     } else if (position == notificationsServiceConnectionRow) {
                         checkCell.setTextAndValueAndCheck(LocaleController.getString("NotificationsServiceConnection", R.string.NotificationsServiceConnection), LocaleController.getString("NotificationsServiceConnectionInfo", R.string.NotificationsServiceConnectionInfo), preferences.getBoolean("pushConnection", getMessagesController().backgroundConnection), true, true);
                     } else if (position == badgeNumberShowRow) {
-                        checkCell.setTextAndCheck(LocaleController.getString("BadgeNumberShow", R.string.BadgeNumberShow), getNotificationsController().showBadgeNumber, true);
+                        checkCell.setTextAndCheck(LocaleController.getString("BadgeNumberShow", R.string.BadgeNumberShow), NotificationsController.getInstance(currentAccount).showBadgeNumber, true);
                     } else if (position == badgeNumberMutedRow) {
-                        checkCell.setTextAndCheck(LocaleController.getString("BadgeNumberMutedChats", R.string.BadgeNumberMutedChats), getNotificationsController().showBadgeMuted, true);
+                        checkCell.setTextAndCheck(LocaleController.getString("BadgeNumberMutedChats", R.string.BadgeNumberMutedChats), NotificationsController.getInstance(currentAccount).showBadgeMuted, true);
                     } else if (position == badgeNumberMessagesRow) {
-                        checkCell.setTextAndCheck(LocaleController.getString("BadgeNumberUnread", R.string.BadgeNumberUnread), getNotificationsController().showBadgeMessages, false);
+                        checkCell.setTextAndCheck(LocaleController.getString("BadgeNumberUnread", R.string.BadgeNumberUnread), NotificationsController.getInstance(currentAccount).showBadgeMessages, false);
                     } else if (position == inchatSoundRow) {
                         checkCell.setTextAndCheck(LocaleController.getString("InChatSound", R.string.InChatSound), preferences.getBoolean("EnableInChatSound", true), true);
                     } else if (position == callsVibrateRow) {

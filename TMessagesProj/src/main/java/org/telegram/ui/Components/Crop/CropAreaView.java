@@ -340,12 +340,13 @@ public class CropAreaView extends View {
     }
 
     @Keep
+    @SuppressWarnings("unused")
     private void setGridProgress(float value) {
         gridProgress = value;
         invalidate();
     }
 
-    @Keep
+    @SuppressWarnings("unused")
     private float getGridProgress() {
         return gridProgress;
     }
@@ -365,7 +366,7 @@ public class CropAreaView extends View {
             animator = set;
             set.setDuration(300);
 
-            Animator[] animators = new Animator[5];
+            Animator animators[] = new Animator[5];
             animators[0] = ObjectAnimator.ofFloat(this, "cropLeft", targetRect.left);
             animators[0].setInterpolator(interpolator);
             animators[1] = ObjectAnimator.ofFloat(this, "cropTop", targetRect.top);
@@ -399,45 +400,47 @@ public class CropAreaView extends View {
     }
 
     @Keep
+    @SuppressWarnings("unused")
     private void setCropLeft(float value) {
         actualRect.left = value;
         invalidate();
     }
 
-    @Keep
+    @SuppressWarnings("unused")
     public float getCropLeft() {
         return actualRect.left;
     }
 
     @Keep
+    @SuppressWarnings("unused")
     private void setCropTop(float value) {
         actualRect.top = value;
         invalidate();
     }
 
-    @Keep
+    @SuppressWarnings("unused")
     public float getCropTop() {
         return actualRect.top;
     }
 
     @Keep
+    @SuppressWarnings("unused")
     private void setCropRight(float value) {
         actualRect.right = value;
         invalidate();
     }
 
-    @Keep
     public float getCropRight() {
         return actualRect.right;
     }
 
     @Keep
+    @SuppressWarnings("unused")
     private void setCropBottom(float value) {
         actualRect.bottom = value;
         invalidate();
     }
 
-    @Keep
     public float getCropBottom() {
         return actualRect.bottom;
     }

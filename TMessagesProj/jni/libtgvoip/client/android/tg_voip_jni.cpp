@@ -21,7 +21,6 @@
 #include "../../os/android/JNIUtilities.h"
 #include "../../PrivateDefines.h"
 #include "../../logging.h"
-#include "../../../c_utils.h"
 
 #ifdef TGVOIP_HAS_CONFIG
 #include <tgvoip_config.h>
@@ -561,20 +560,7 @@ namespace tgvoip {
 	}
 }
 
-extern "C" int tgvoipOnJniLoad(JavaVM *vm, JNIEnv *env);
-
-extern "C" jint JNI_OnLoad(JavaVM *vm, void *reserved) {
-	JNIEnv *env = 0;
-	srand(time(NULL));
-
-	if (vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
-		return -1;
-	}
-
-	if (tgvoipOnJniLoad(vm, env) != JNI_TRUE) {
-		return -1;
-	}
-
+extern "C" void tgvoipRegisterNatives(JNIEnv* env){
 	jclass controller=env->FindClass(TGVOIP_PACKAGE_PATH "/VoIPController");
 	jclass groupController=env->FindClass(TGVOIP_PACKAGE_PATH "/VoIPGroupController");
 	if(env->ExceptionCheck()){
@@ -744,6 +730,4 @@ extern "C" jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 		};
 		env->RegisterNatives(vlog, vlogMethods, sizeof(vlogMethods)/sizeof(JNINativeMethod));
 	}
-
-	return JNI_VERSION_1_6;
 }

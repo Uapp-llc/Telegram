@@ -16,15 +16,10 @@ extern JavaVM* sharedJVM;
 namespace tgvoip{
 	namespace jni{
 
-		inline JNIEnv *GetEnv() {
-			JNIEnv *env = nullptr;
-			sharedJVM->GetEnv((void **) &env, JNI_VERSION_1_6);
-			return env;
-		}
-
 		inline void DoWithJNI(std::function<void(JNIEnv*)> f){
-			JNIEnv *env=GetEnv();
+			JNIEnv *env=NULL;
 			bool didAttach=false;
+			sharedJVM->GetEnv((void **) &env, JNI_VERSION_1_6);
 			if(!env){
 				sharedJVM->AttachCurrentThread(&env, NULL);
 				didAttach=true;
@@ -64,6 +59,7 @@ namespace tgvoip{
 			env->ReleaseByteArrayElements(arr, elements, 0);
 			return arr;
 		}
+
 	}
 }
 

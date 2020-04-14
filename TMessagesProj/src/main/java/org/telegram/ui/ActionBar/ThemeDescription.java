@@ -430,7 +430,9 @@ public class ThemeDescription {
         if (viewToInvalidate instanceof RecyclerListView) {
             RecyclerListView recyclerListView = (RecyclerListView) viewToInvalidate;
             if ((changeFlags & FLAG_SELECTOR) != 0) {
-                recyclerListView.setListSelectorColor(color);
+                if (currentKey.equals(Theme.key_listSelector)) {
+                    recyclerListView.setListSelectorColor(color);
+                }
             }
             if ((changeFlags & FLAG_FASTSCROLL) != 0) {
                 recyclerListView.updateFastScrollColors();

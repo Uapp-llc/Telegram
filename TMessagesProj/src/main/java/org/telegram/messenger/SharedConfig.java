@@ -59,9 +59,7 @@ public class SharedConfig {
     public static int searchMessagesAsListHintShows;
     public static int textSelectionHintShows;
     public static int scheduledOrNoSoundHintShows;
-    public static int lockRecordAudioVideoHint;
     public static boolean searchMessagesAsListUsed;
-    public static boolean stickersReorderingHintUsed;
     private static int lastLocalId = -210000;
 
     private static String passportConfigJson = "";
@@ -178,7 +176,6 @@ public class SharedConfig {
                 editor.putBoolean("sortFilesByName", sortFilesByName);
                 editor.putInt("textSelectionHintShows", textSelectionHintShows);
                 editor.putInt("scheduledOrNoSoundHintShows", scheduledOrNoSoundHintShows);
-                editor.putInt("lockRecordAudioVideoHint", lockRecordAudioVideoHint);
                 editor.commit();
             } catch (Exception e) {
                 FileLog.e(e);
@@ -272,10 +269,9 @@ public class SharedConfig {
             lastKeepMediaCheckTime = preferences.getInt("lastKeepMediaCheckTime", 0);
             searchMessagesAsListHintShows = preferences.getInt("searchMessagesAsListHintShows", 0);
             searchMessagesAsListUsed = preferences.getBoolean("searchMessagesAsListUsed", false);
-            stickersReorderingHintUsed = preferences.getBoolean("stickersReorderingHintUsed", false);
             textSelectionHintShows = preferences.getInt("textSelectionHintShows", 0);
             scheduledOrNoSoundHintShows = preferences.getInt("scheduledOrNoSoundHintShows", 0);
-            lockRecordAudioVideoHint = preferences.getInt("lockRecordAudioVideoHint", 0);
+
             preferences = ApplicationLoader.applicationContext.getSharedPreferences("Notifications", Activity.MODE_PRIVATE);
             showNotificationsForAllAccounts = preferences.getBoolean("AllAccounts", true);
 
@@ -392,7 +388,6 @@ public class SharedConfig {
         lastUpdateVersion = BuildVars.BUILD_VERSION_STRING;
         textSelectionHintShows = 0;
         scheduledOrNoSoundHintShows = 0;
-        lockRecordAudioVideoHint = 0;
         saveConfig();
     }
 
@@ -409,14 +404,6 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("searchMessagesAsListUsed", searchMessagesAsListUsed);
-        editor.commit();
-    }
-
-    public static void setStickersReorderingHintUsed(boolean stickersReorderingHintUsed) {
-        SharedConfig.stickersReorderingHintUsed = stickersReorderingHintUsed;
-        SharedPreferences preferences = MessagesController.getGlobalMainSettings();
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean("stickersReorderingHintUsed", stickersReorderingHintUsed);
         editor.commit();
     }
 
@@ -445,20 +432,6 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("scheduledOrNoSoundHintShows", 3);
-        editor.commit();
-    }
-
-    public static void increaseLockRecordAudioVideoHintShowed() {
-        SharedPreferences preferences = MessagesController.getGlobalMainSettings();
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt("lockRecordAudioVideoHint", ++lockRecordAudioVideoHint);
-        editor.commit();
-    }
-
-    public static void removeLockRecordAudioVideoHint() {
-        SharedPreferences preferences = MessagesController.getGlobalMainSettings();
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt("lockRecordAudioVideoHint", 3);
         editor.commit();
     }
 
@@ -854,10 +827,10 @@ public class SharedConfig {
                 }
             } else {
                 if (imagePath.isDirectory()) {
-                    AndroidUtilities.createEmptyFile(new File(imagePath, ".nomedia"));
+                    new File(imagePath, ".nomedia").createNewFile();
                 }
                 if (videoPath.isDirectory()) {
-                    AndroidUtilities.createEmptyFile(new File(videoPath, ".nomedia"));
+                    new File(videoPath, ".nomedia").createNewFile();
                 }
             }
         } catch (Throwable e) {

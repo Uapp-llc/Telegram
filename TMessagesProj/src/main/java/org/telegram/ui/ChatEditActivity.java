@@ -16,6 +16,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.text.Editable;
@@ -173,7 +174,7 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
             imageUpdater.clear();
         }
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.chatInfoDidLoad);
-        AndroidUtilities.removeAdjustResize(getParentActivity(), classGuid, true);
+        AndroidUtilities.removeAdjustResize(getParentActivity(), classGuid);
         if (nameTextView != null) {
             nameTextView.onDestroy();
         }
@@ -186,7 +187,7 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
             nameTextView.onResume();
             nameTextView.getEditText().requestFocus();
         }
-        AndroidUtilities.requestAdjustResize(getParentActivity(), classGuid, true);
+        AndroidUtilities.requestAdjustResize(getParentActivity(), classGuid);
         updateFields(true);
     }
 
@@ -446,7 +447,6 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
         }
 
         nameTextView = new EditTextEmoji(context, sizeNotifierFrameLayout, this, EditTextEmoji.STYLE_FRAGMENT);
-        nameTextView.setAllowSmoothKeybord(false);
         if (isChannel) {
             nameTextView.setHint(LocaleController.getString("EnterChannelName", R.string.EnterChannelName));
         } else {
@@ -575,7 +575,7 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
                 LinearLayout linearLayout = new LinearLayout(context);
                 linearLayout.setOrientation(LinearLayout.VERTICAL);
 
-                HeaderCell headerCell = new HeaderCell(context, Theme.key_dialogTextBlue2, 23, 15, false);
+                HeaderCell headerCell = new HeaderCell(context, true, 23, 15, false);
                 headerCell.setHeight(47);
                 headerCell.setText(LocaleController.getString("ChatHistory", R.string.ChatHistory));
                 linearLayout.addView(headerCell);
@@ -1272,7 +1272,7 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
                 new ThemeDescription(stickersInfoCell3, ThemeDescription.FLAG_BACKGROUNDFILTER, new Class[]{TextInfoPrivacyCell.class}, null, null, null, Theme.key_windowBackgroundGrayShadow),
                 new ThemeDescription(stickersInfoCell3, 0, new Class[]{TextInfoPrivacyCell.class}, new String[]{"textView"}, null, null, null, Theme.key_windowBackgroundWhiteGrayText4),
 
-                new ThemeDescription(null, 0, null, null, Theme.avatarDrawables, cellDelegate, Theme.key_avatar_text),
+                new ThemeDescription(null, 0, null, null, new Drawable[]{Theme.avatar_savedDrawable}, cellDelegate, Theme.key_avatar_text),
                 new ThemeDescription(null, 0, null, null, null, cellDelegate, Theme.key_avatar_backgroundRed),
                 new ThemeDescription(null, 0, null, null, null, cellDelegate, Theme.key_avatar_backgroundOrange),
                 new ThemeDescription(null, 0, null, null, null, cellDelegate, Theme.key_avatar_backgroundViolet),

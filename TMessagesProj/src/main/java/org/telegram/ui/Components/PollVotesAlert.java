@@ -436,7 +436,7 @@ public class PollVotesAlert extends BottomSheet {
         parentFragment.showDialog(alert);
     }
 
-    private static class Button {
+    private class Button {
         private float decimal;
         private int percent;
         private int votesCount;
@@ -593,6 +593,7 @@ public class PollVotesAlert extends BottomSheet {
 
             private boolean ignoreLayout = false;
             private RectF rect = new RectF();
+            private boolean fullHeight;
 
             @Override
             protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -628,6 +629,7 @@ public class PollVotesAlert extends BottomSheet {
                     listView.setPadding(0, padding, 0, 0);
                     ignoreLayout = false;
                 }
+                fullHeight = contentSize >= totalHeight;
                 super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(totalHeight, MeasureSpec.EXACTLY));
             }
 
@@ -801,9 +803,6 @@ public class PollVotesAlert extends BottomSheet {
                 }));
             } else if (view instanceof UserCell) {
                 UserCell userCell = (UserCell) view;
-                if (userCell.currentUser == null) {
-                    return;
-                }
                 TLRPC.User currentUser = parentFragment.getCurrentUser();
                 Bundle args = new Bundle();
                 args.putInt("user_id", userCell.currentUser.id);

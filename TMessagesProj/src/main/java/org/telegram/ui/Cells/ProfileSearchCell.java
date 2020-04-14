@@ -388,7 +388,7 @@ public class ProfileSearchCell extends BaseCell {
             }
             if (savedMessages) {
                 statusString = null;
-                nameTop = AndroidUtilities.dp(20);
+                nameTop = AndroidUtilities.dp(19);
             }
         } else {
             if (chat != null) {

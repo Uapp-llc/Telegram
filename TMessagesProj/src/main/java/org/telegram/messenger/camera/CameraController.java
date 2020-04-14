@@ -621,13 +621,7 @@ public class CameraController implements MediaRecorder.OnInfoListener {
                         Size pictureSize;
                         pictureSize = new Size(16, 9);
                         pictureSize = CameraController.chooseOptimalSize(info.getPictureSizes(), 720, 480, pictureSize);
-                        int bitrate;
-                        if (Math.min(pictureSize.mHeight,pictureSize.mWidth) >= 720) {
-                            bitrate = 3500000;
-                        } else {
-                            bitrate = 1800000;
-                        }
-                        recorder.setVideoEncodingBitRate(bitrate);
+                        recorder.setVideoEncodingBitRate(900000 * 2);
                         recorder.setVideoSize(pictureSize.getWidth(), pictureSize.getHeight());
                         recorder.setOnInfoListener(CameraController.this);
                         recorder.prepare();

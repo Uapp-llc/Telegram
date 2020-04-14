@@ -249,12 +249,11 @@ public class StickersAlert extends BottomSheet implements NotificationCenter.Not
 
     private void loadStickerSet() {
         if (inputStickerSet != null) {
-            final MediaDataController mediaDataController = MediaDataController.getInstance(currentAccount);
             if (stickerSet == null && inputStickerSet.short_name != null) {
-                stickerSet = mediaDataController.getStickerSetByName(inputStickerSet.short_name);
+                stickerSet = MediaDataController.getInstance(currentAccount).getStickerSetByName(inputStickerSet.short_name);
             }
             if (stickerSet == null) {
-                stickerSet = mediaDataController.getStickerSetById(inputStickerSet.id);
+                stickerSet = MediaDataController.getInstance(currentAccount).getStickerSetById(inputStickerSet.id);
             }
             if (stickerSet == null) {
                 TLRPC.TL_messages_getStickerSet req = new TLRPC.TL_messages_getStickerSet();
@@ -265,7 +264,6 @@ public class StickersAlert extends BottomSheet implements NotificationCenter.Not
                         optionsButton.setVisibility(View.VISIBLE);
                         stickerSet = (TLRPC.TL_messages_stickerSet) response;
                         showEmoji = !stickerSet.set.masks;
-                        mediaDataController.preloadStickerSetThumb(stickerSet);
                         updateSendButton();
                         updateFields();
                         adapter.notifyDataSetChanged();
@@ -274,13 +272,10 @@ public class StickersAlert extends BottomSheet implements NotificationCenter.Not
                         dismiss();
                     }
                 }));
-            } else {
-                if (adapter != null) {
-                    updateSendButton();
-                    updateFields();
-                    adapter.notifyDataSetChanged();
-                }
-                mediaDataController.preloadStickerSetThumb(stickerSet);
+            } else if (adapter != null) {
+                updateSendButton();
+                updateFields();
+                adapter.notifyDataSetChanged();
             }
         }
         if (stickerSet != null) {
@@ -710,18 +705,22 @@ public class StickersAlert extends BottomSheet implements NotificationCenter.Not
                     if (installDelegate != null) {
                         installDelegate.onStickerSetInstalled();
                     }
-                    if (MediaDataController.getInstance(currentAccount).cancelRemovingStickerSet(inputStickerSet.id)) {
-                        return;
-                    }
                     TLRPC.TL_messages_installStickerSet req = new TLRPC.TL_messages_installStickerSet();
                     req.stickerset = inputStickerSet;
                     ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-                        final int type = stickerSet.set.masks ? MediaDataController.TYPE_MASK : MediaDataController.TYPE_IMAGE;
                         try {
                             if (error == null) {
-                                Bulletin.make(parentFragment, new StickerSetBulletinLayout(pickerBottomLayout.getContext(), stickerSet, StickerSetBulletinLayout.TYPE_ADDED), Bulletin.DURATION_SHORT).show();
+                                if (stickerSet.set.masks) {
+                                    Toast.makeText(getContext(), LocaleController.getString("AddMasksInstalled", R.string.AddMasksInstalled), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(getContext(), LocaleController.getString("AddStickersInstalled", R.string.AddStickersInstalled), Toast.LENGTH_SHORT).show();
+                                }
                                 if (response instanceof TLRPC.TL_messages_stickerSetInstallResultArchive) {
-                                    MediaDataController.getInstance(currentAccount).processStickerSetInstallResultArchive(parentFragment, true, type, (TLRPC.TL_messages_stickerSetInstallResultArchive) response);
+                                    NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.needReloadArchivedStickers);
+                                    if (parentFragment != null && parentFragment.getParentActivity() != null) {
+                                        StickersArchiveAlert alert = new StickersArchiveAlert(parentFragment.getParentActivity(), parentFragment, ((TLRPC.TL_messages_stickerSetInstallResultArchive) response).sets);
+                                        parentFragment.showDialog(alert.create());
+                                    }
                                 }
                             } else {
                                 Toast.makeText(getContext(), LocaleController.getString("ErrorOccurred", R.string.ErrorOccurred), Toast.LENGTH_SHORT).show();
@@ -729,7 +728,7 @@ public class StickersAlert extends BottomSheet implements NotificationCenter.Not
                         } catch (Exception e) {
                             FileLog.e(e);
                         }
-                        MediaDataController.getInstance(currentAccount).loadStickers(type, false, true);
+                        MediaDataController.getInstance(currentAccount).loadStickers(stickerSet.set.masks ? MediaDataController.TYPE_MASK : MediaDataController.TYPE_IMAGE, false, true);
                     }));
                 }, text, Theme.getColor(Theme.key_dialogTextBlue2));
             } else {
@@ -745,7 +744,7 @@ public class StickersAlert extends BottomSheet implements NotificationCenter.Not
                             installDelegate.onStickerSetUninstalled();
                         }
                         dismiss();
-                        MediaDataController.getInstance(currentAccount).toggleStickerSet(getContext(), stickerSet, 1, parentFragment, true, true);
+                        MediaDataController.getInstance(currentAccount).removeStickersSet(getContext(), stickerSet.set, 1, parentFragment, true);
                     }, text, Theme.getColor(Theme.key_dialogTextRed));
                 } else {
                     setButton(v -> {
@@ -753,7 +752,7 @@ public class StickersAlert extends BottomSheet implements NotificationCenter.Not
                             installDelegate.onStickerSetUninstalled();
                         }
                         dismiss();
-                        MediaDataController.getInstance(currentAccount).toggleStickerSet(getContext(), stickerSet, 0, parentFragment, true, true);
+                        MediaDataController.getInstance(currentAccount).removeStickersSet(getContext(), stickerSet.set, 0, parentFragment, true);
                     }, text, Theme.getColor(Theme.key_dialogTextRed));
                 }
             }

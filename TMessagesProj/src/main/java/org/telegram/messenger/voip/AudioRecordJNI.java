@@ -74,9 +74,8 @@ public class AudioRecordJNI {
 			try {
 				if (NoiseSuppressor.isAvailable()) {
 					ns = NoiseSuppressor.create(audioRecord.getAudioSessionId());
-					if (ns != null) {
-						ns.setEnabled(TgVoip.getGlobalServerConfig().useSystemNs && isGoodAudioEffect(ns));
-					}
+					if (ns != null)
+						ns.setEnabled(VoIPServerConfig.getBoolean("use_system_ns", true) && isGoodAudioEffect(ns));
 				} else {
 					VLog.w("NoiseSuppressor is not available on this device :(");
 				}
@@ -86,9 +85,8 @@ public class AudioRecordJNI {
 			try {
 				if (AcousticEchoCanceler.isAvailable()) {
 					aec = AcousticEchoCanceler.create(audioRecord.getAudioSessionId());
-					if (aec != null) {
-						aec.setEnabled(TgVoip.getGlobalServerConfig().useSystemAec && isGoodAudioEffect(aec));
-					}
+					if (aec != null)
+						aec.setEnabled(VoIPServerConfig.getBoolean("use_system_aec", true) && isGoodAudioEffect(aec));
 				} else {
 					VLog.w("AcousticEchoCanceler is not available on this device");
 				}
@@ -213,15 +211,15 @@ public class AudioRecordJNI {
 	}
 
 	private static Pattern makeNonEmptyRegex(String configKey){
-		final String r = TgVoip.getGlobalServerConfig().getString(configKey);
-		if (!TextUtils.isEmpty(r)) {
-			try {
-				return Pattern.compile(r);
-			} catch (Exception x) {
-				VLog.e(x);
-			}
+		String r=VoIPServerConfig.getString(configKey, "");
+		if(TextUtils.isEmpty(r))
+			return null;
+		try{
+			return Pattern.compile(r);
+		}catch(Exception x){
+			VLog.e(x);
+			return null;
 		}
-		return null;
 	}
 
 	private static boolean isGoodAudioEffect(AudioEffect effect){

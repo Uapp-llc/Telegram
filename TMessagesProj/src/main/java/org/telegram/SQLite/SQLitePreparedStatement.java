@@ -8,8 +8,6 @@
 
 package org.telegram.SQLite;
 
-import android.os.SystemClock;
-
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.FileLog;
 import org.telegram.tgnet.NativeByteBuffer;
@@ -20,25 +18,28 @@ public class SQLitePreparedStatement {
 
     private boolean isFinalized = false;
     private long sqliteStatementHandle;
+    private boolean finalizeAfterQuery;
 
-    private long startTime;
-    private String query;
     //private static HashMap<SQLitePreparedStatement, String> hashMap;
 
     public long getStatementHandle() {
         return sqliteStatementHandle;
     }
 
-    public SQLitePreparedStatement(SQLiteDatabase db, String sql) throws SQLiteException {
+    public SQLitePreparedStatement(SQLiteDatabase db, String sql, boolean finalize) throws SQLiteException {
+        finalizeAfterQuery = finalize;
         sqliteStatementHandle = prepare(db.getSQLiteHandle(), sql);
-        if (BuildVars.DEBUG_VERSION) {
-            query = sql;
-            startTime = SystemClock.elapsedRealtime();
-            /*if (hashMap == null) {
+        /*if (BuildVars.DEBUG_VERSION) {
+            if (hashMap == null) {
                 hashMap = new HashMap<>();
             }
-            hashMap.put(this, sql);*/
-        }
+            hashMap.put(this, sql);
+            for (HashMap.Entry<SQLitePreparedStatement, String> entry : hashMap.entrySet()) {
+                if (BuildVars.LOGS_ENABLED) {
+                    FileLog.d("exist entry = " + entry.getValue());
+                }
+            }
+        }*/
     }
 
 
@@ -88,7 +89,9 @@ public class SQLitePreparedStatement {
     }
 
     public void dispose() {
-        finalizeQuery();
+        if (finalizeAfterQuery) {
+            finalizeQuery();
+        }
     }
 
     void checkFinalized() throws SQLiteException {
@@ -100,12 +103,6 @@ public class SQLitePreparedStatement {
     public void finalizeQuery() {
         if (isFinalized) {
             return;
-        }
-        if (BuildVars.DEBUG_VERSION) {
-            long diff = SystemClock.elapsedRealtime() - startTime;
-            if (diff > 500) {
-                FileLog.d("sqlite query " + query + " took " + diff + "ms");
-            }
         }
         try {
             /*if (BuildVars.DEBUG_VERSION) {

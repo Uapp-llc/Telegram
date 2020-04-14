@@ -790,7 +790,6 @@ public class ImageLoader {
                 boolean limitFps = false;
                 int autoRepeat = 1;
                 int[] colors = null;
-                boolean dice = false;
                 if (cacheImage.filter != null) {
                     String[] args = cacheImage.filter.split("_");
                     if (args.length >= 2) {
@@ -811,9 +810,6 @@ public class ImageLoader {
                             autoRepeat = 2;
                         } else if ("nrs".equals(args[2])) {
                             autoRepeat = 3;
-                        } else if ("dice".equals(args[2])) {
-                            dice = true;
-                            autoRepeat = 2;
                         }
                     }
                     if (args.length >= 5) {
@@ -830,12 +826,7 @@ public class ImageLoader {
                         }
                     }
                 }
-                RLottieDrawable lottieDrawable;
-                if (dice) {
-                    lottieDrawable = new RLottieDrawable(R.raw.diceloop, w, h);
-                } else {
-                    lottieDrawable = new RLottieDrawable(cacheImage.finalFilePath, w, h, precache, limitFps, colors);
-                }
+                RLottieDrawable lottieDrawable = new RLottieDrawable(cacheImage.finalFilePath, w, h, precache, limitFps, colors);
                 lottieDrawable.setAutoRepeat(autoRepeat);
                 onPostExecute(lottieDrawable);
             } else if (cacheImage.imageType == FileLoader.IMAGE_TYPE_ANIMATION) {
@@ -1636,7 +1627,11 @@ public class ImageLoader {
                 FileLog.e(e);
             }
         }
-        AndroidUtilities.createEmptyFile(new File(cachePath, ".nomedia"));
+        try {
+            new File(cachePath, ".nomedia").createNewFile();
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
         mediaDirs.put(FileLoader.MEDIA_DIR_CACHE, cachePath);
 
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
@@ -1771,7 +1766,11 @@ public class ImageLoader {
                 FileLog.e(e);
             }
         }
-        AndroidUtilities.createEmptyFile(new File(cachePath, ".nomedia"));
+        try {
+            new File(cachePath, ".nomedia").createNewFile();
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
 
         mediaDirs.put(FileLoader.MEDIA_DIR_CACHE, cachePath);
         if (BuildVars.LOGS_ENABLED) {
@@ -1814,7 +1813,7 @@ public class ImageLoader {
                         File audioPath = new File(telegramPath, "Telegram Audio");
                         audioPath.mkdir();
                         if (audioPath.isDirectory() && canMoveFiles(cachePath, audioPath, FileLoader.MEDIA_DIR_AUDIO)) {
-                            AndroidUtilities.createEmptyFile(new File(audioPath, ".nomedia"));
+                            new File(audioPath, ".nomedia").createNewFile();
                             mediaDirs.put(FileLoader.MEDIA_DIR_AUDIO, audioPath);
                             if (BuildVars.LOGS_ENABLED) {
                                 FileLog.d("audio path = " + audioPath);
@@ -1828,7 +1827,7 @@ public class ImageLoader {
                         File documentPath = new File(telegramPath, "Telegram Documents");
                         documentPath.mkdir();
                         if (documentPath.isDirectory() && canMoveFiles(cachePath, documentPath, FileLoader.MEDIA_DIR_DOCUMENT)) {
-                            AndroidUtilities.createEmptyFile(new File(documentPath, ".nomedia"));
+                            new File(documentPath, ".nomedia").createNewFile();
                             mediaDirs.put(FileLoader.MEDIA_DIR_DOCUMENT, documentPath);
                             if (BuildVars.LOGS_ENABLED) {
                                 FileLog.d("documents path = " + documentPath);
@@ -2320,9 +2319,6 @@ public class ImageLoader {
                                         onlyCache = true;
                                     }
                                     img.imageType = FileLoader.IMAGE_TYPE_THEME_PREVIEW;
-                                } else if ("application/x-tgsdice".equals(imageLocation.document.mime_type)) {
-                                    img.imageType = FileLoader.IMAGE_TYPE_LOTTIE;
-                                    onlyCache = true;
                                 } else if ("application/x-tgsticker".equals(imageLocation.document.mime_type)) {
                                     img.imageType = FileLoader.IMAGE_TYPE_LOTTIE;
                                 } else if ("application/x-tgwallpattern".equals(imageLocation.document.mime_type)) {
@@ -2352,9 +2348,6 @@ public class ImageLoader {
                                     onlyCache = true;
                                 }
                                 img.imageType = FileLoader.IMAGE_TYPE_THEME_PREVIEW;
-                            } else if ("application/x-tgsdice".equals(imageLocation.document.mime_type)) {
-                                img.imageType = FileLoader.IMAGE_TYPE_LOTTIE;
-                                onlyCache = true;
                             } else if ("application/x-tgsticker".equals(document.mime_type)) {
                                 img.imageType = FileLoader.IMAGE_TYPE_LOTTIE;
                             } else if ("application/x-tgwallpattern".equals(document.mime_type)) {

@@ -214,10 +214,6 @@ public class AnimatedFileDrawable extends BitmapDrawable implements Animatable {
             if (!isRecycled) {
                 if (!decoderCreated && nativePtr == 0) {
                     nativePtr = createDecoder(path.getAbsolutePath(), metaData, currentAccount, streamFileSize, stream, false);
-                    if (nativePtr != 0 && (metaData[0] > 3840 || metaData[1] > 3840)) {
-                        destroyDecoder(nativePtr);
-                        nativePtr = 0;
-                    }
                     decoderCreated = true;
                 }
                 try {
@@ -286,10 +282,6 @@ public class AnimatedFileDrawable extends BitmapDrawable implements Animatable {
         }
         if (createDecoder) {
             nativePtr = createDecoder(file.getAbsolutePath(), metaData, currentAccount, streamFileSize, stream, preview);
-            if (nativePtr != 0 && (metaData[0] > 3840 || metaData[1] > 3840)) {
-                destroyDecoder(nativePtr);
-                nativePtr = 0;
-            }
             decoderCreated = true;
         }
     }

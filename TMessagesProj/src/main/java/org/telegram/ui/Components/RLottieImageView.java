@@ -74,10 +74,6 @@ public class RLottieImageView extends ImageView {
         }
     }
 
-    public boolean isPlaying() {
-        return drawable != null && drawable.isRunning();
-    }
-
     public void setAutoRepeat(boolean repeat) {
         autoRepeat = repeat;
     }
@@ -99,21 +95,5 @@ public class RLottieImageView extends ImageView {
         } else {
             startOnAttach = true;
         }
-    }
-
-    public void stopAnimation() {
-        if (drawable == null) {
-            return;
-        }
-        playing = false;
-        if (attachedToWindow) {
-            drawable.stop();
-        } else {
-            startOnAttach = false;
-        }
-    }
-
-    public RLottieDrawable getAnimatedDrawable() {
-        return drawable;
     }
 }

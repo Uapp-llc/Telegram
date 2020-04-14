@@ -336,21 +336,21 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
     private int selectedFont = 0;
     private FontCell[] fontCells = new FontCell[2];
 
-    private static class TL_pageBlockRelatedArticlesChild extends TLRPC.PageBlock {
+    private class TL_pageBlockRelatedArticlesChild extends TLRPC.PageBlock {
         private TLRPC.TL_pageBlockRelatedArticles parent;
         private int num;
     }
 
-    private static class TL_pageBlockRelatedArticlesShadow extends TLRPC.PageBlock {
+    private class TL_pageBlockRelatedArticlesShadow extends TLRPC.PageBlock {
         private TLRPC.TL_pageBlockRelatedArticles parent;
     }
 
-    private static class TL_pageBlockDetailsChild extends TLRPC.PageBlock {
+    private class TL_pageBlockDetailsChild extends TLRPC.PageBlock {
         private TLRPC.PageBlock parent;
         private TLRPC.PageBlock block;
     }
 
-    private static class TL_pageBlockDetailsBottom extends TLRPC.PageBlock {
+    private class TL_pageBlockDetailsBottom extends TLRPC.PageBlock {
         private TLRPC.TL_pageBlockDetails parent;
     }
 
@@ -390,7 +390,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         private int index = Integer.MAX_VALUE;
     }
 
-    private static class TL_pageBlockEmbedPostCaption extends TLRPC.TL_pageBlockEmbedPost {
+    private class TL_pageBlockEmbedPostCaption extends TLRPC.TL_pageBlockEmbedPost {
         private TLRPC.TL_pageBlockEmbedPost parent;
     }
 
@@ -560,7 +560,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         }
     }
 
-    public static class FontCell extends FrameLayout {
+    public class FontCell extends FrameLayout {
 
         private TextView textView;
         private RadioButton radioButton;
@@ -2159,7 +2159,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         return Theme.getColor(Theme.key_windowBackgroundWhiteLinkText);
     }
 
-    private static int getGrayTextColor() {
+    private int getGrayTextColor() {
         return Theme.getColor(Theme.key_windowBackgroundWhiteGrayText);
     }
 
@@ -3228,7 +3228,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                 }
                 return false;
             });
-            listView[i].setOnItemClickListener((view, position, x, y) -> {
+            listView[i].setOnItemClickListener((view, position) -> {
                 if (textSelectionHelper != null) {
                     if (textSelectionHelper.isSelectionMode()) {
                         textSelectionHelper.clear();
@@ -3236,9 +3236,8 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                     }
                     textSelectionHelper.clear();
                 }
-                if (view instanceof ReportCell && webpageAdapter.currentPage != null) {
-                    ReportCell cell = (ReportCell) view;
-                    if (previewsReqId != 0 || cell.hasViews && x < view.getMeasuredWidth() / 2) {
+                if (position == webpageAdapter.localBlocks.size() && webpageAdapter.currentPage != null) {
+                    if (previewsReqId != 0) {
                         return;
                     }
                     TLObject object = MessagesController.getInstance(currentAccount).getUserOrChat("previews");
@@ -4161,7 +4160,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
     private int currentSearchIndex;
     private int lastSearchIndex = -1;
 
-    private static class SearchResult {
+    private class SearchResult {
         private int index;
         private Object text;
         private TLRPC.PageBlock block;
@@ -4297,7 +4296,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         listView[0].invalidateViews();
     }
 
-    public static class ScrollEvaluator extends IntEvaluator {
+    public class ScrollEvaluator extends IntEvaluator {
 
         @Override
         public Integer evaluate(float fraction, Integer startValue, Integer endValue) {
@@ -4452,53 +4451,32 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
             }
             final TLRPC.WebPage webPageFinal = webpage;
             final int currentAccount = UserConfig.selectedAccount;
-            ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> {
                 if (response instanceof TLRPC.TL_webPage) {
                     final TLRPC.TL_webPage webPage = (TLRPC.TL_webPage) response;
                     if (webPage.cached_page == null) {
                         return;
                     }
-
-                    if (!pagesStack.isEmpty() && pagesStack.get(0) == webPageFinal && webPage.cached_page != null) {
-                        if (messageObject != null) {
-                            messageObject.messageOwner.media.webpage = webPage;
-                            TLRPC.TL_messages_messages messagesRes = new TLRPC.TL_messages_messages();
-                            messagesRes.messages.add(messageObject.messageOwner);
-                            MessagesStorage.getInstance(currentAccount).putMessages(messagesRes, messageObject.getDialogId(), -2, 0, false, messageObject.scheduled);
-                        }
-                        pagesStack.set(0, webPage);
-                        if (pagesStack.size() == 1) {
-                            ApplicationLoader.applicationContext.getSharedPreferences("articles", Activity.MODE_PRIVATE).edit().remove("article" + webPage.id).commit();
-                            updateInterfaceForCurrentPage(webPage, false, 0);
-                            if (anchorFinal != null) {
-                                scrollToAnchor(anchorFinal);
+                    AndroidUtilities.runOnUIThread(() -> {
+                        if (!pagesStack.isEmpty() && pagesStack.get(0) == webPageFinal && webPage.cached_page != null) {
+                            if (messageObject != null) {
+                                messageObject.messageOwner.media.webpage = webPage;
+                            }
+                            pagesStack.set(0, webPage);
+                            if (pagesStack.size() == 1) {
+                                ApplicationLoader.applicationContext.getSharedPreferences("articles", Activity.MODE_PRIVATE).edit().remove("article" + webPage.id).commit();
+                                updateInterfaceForCurrentPage(webPage, false, 0);
+                                if (anchorFinal != null) {
+                                    scrollToAnchor(anchorFinal);
+                                }
                             }
                         }
-                    }
-
+                    });
                     LongSparseArray<TLRPC.WebPage> webpages = new LongSparseArray<>(1);
                     webpages.put(webPage.id, webPage);
                     MessagesStorage.getInstance(currentAccount).putWebPages(webpages);
-                } else if (response instanceof TLRPC.TL_webPageNotModified) {
-                    TLRPC.TL_webPageNotModified webPage = (TLRPC.TL_webPageNotModified) response;
-                    if (webPageFinal != null && webPageFinal.cached_page != null) {
-                        if (webPageFinal.cached_page.views != webPage.cached_page_views) {
-                            webPageFinal.cached_page.views = webPage.cached_page_views;
-                            webPageFinal.cached_page.flags |= 8;
-                            for (int a = 0; a < adapter.length; a++) {
-                                if (adapter[a].currentPage == webPageFinal) {
-                                    adapter[a].notifyItemChanged(adapter[a].getItemCount() - 1);
-                                }
-                            }
-                            if (messageObject != null) {
-                                TLRPC.TL_messages_messages messagesRes = new TLRPC.TL_messages_messages();
-                                messagesRes.messages.add(messageObject.messageOwner);
-                                MessagesStorage.getInstance(currentAccount).putMessages(messagesRes, messageObject.getDialogId(), -2, 0, false, messageObject.scheduled);
-                            }
-                        }
-                    }
                 }
-            }));
+            });
         }
 
         lastInsets = null;
@@ -5811,7 +5789,19 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                     break;
                 }
                 case 90: {
-                    view = new ReportCell(context);
+                    FrameLayout frameLayout = new FrameLayout(context) {
+                        @Override
+                        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(44), MeasureSpec.EXACTLY));
+                        }
+                    };
+                    frameLayout.setTag(90);
+                    TextView textView = new TextView(context);
+                    frameLayout.addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 34, Gravity.LEFT | Gravity.TOP, 0, 10, 0, 0));
+                    textView.setText(LocaleController.getString("PreviewFeedback", R.string.PreviewFeedback));
+                    textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
+                    textView.setGravity(Gravity.CENTER);
+                    view = frameLayout;
                     break;
                 }
                 case 100:
@@ -5845,8 +5835,14 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                 bindBlockToHolder(holder.getItemViewType(), holder, block, position, localBlocks.size());
             } else {
                 if (holder.getItemViewType() == 90) {
-                    ReportCell cell = (ReportCell) holder.itemView;
-                    cell.setViews(currentPage.cached_page != null ? currentPage.cached_page.views : 0);
+                    TextView textView = (TextView) ((ViewGroup) holder.itemView).getChildAt(0);
+
+                    int color = Theme.getColor(Theme.key_switchTrack);
+                    int r = Color.red(color);
+                    int g = Color.green(color);
+                    int b = Color.blue(color);
+                    textView.setTextColor(getGrayTextColor());
+                    textView.setBackgroundColor(Color.argb(34, r, g, b));
                 }
             }
         }
@@ -9434,7 +9430,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         }
     }
 
-    private static class BlockDetailsBottomCell extends View {
+    private class BlockDetailsBottomCell extends View {
 
         private RectF rect = new RectF();
 
@@ -9453,7 +9449,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         }
     }
 
-    private static class BlockRelatedArticlesShadowCell extends View {
+    private class BlockRelatedArticlesShadowCell extends View {
 
         private CombinedDrawable shadowDrawable;
 
@@ -9761,7 +9757,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         }
     }
 
-    private static class BlockDividerCell extends View {
+    private class BlockDividerCell extends View {
 
         private RectF rect = new RectF();
 
@@ -11278,13 +11274,11 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
             layoutParams.topMargin = layoutParams.bottomMargin = AndroidUtilities.dp(12);
             scrollView.addView(textContainer, layoutParams);
 
-            if (Build.VERSION.SDK_INT >= 23) {
-                scrollView.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
-                    if (textSelectionHelper != null && textSelectionHelper.isSelectionMode()) {
-                        textSelectionHelper.invalidate();
-                    }
-                });
-            }
+            scrollView.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+                if (textSelectionHelper != null && textSelectionHelper.isSelectionMode()) {
+                    textSelectionHelper.invalidate();
+                }
+            });
 
             setWillNotDraw(false);
         }
@@ -11401,53 +11395,6 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         }
     }
 
-    private static class ReportCell extends FrameLayout {
-
-        private TextView textView;
-        private TextView viewsTextView;
-        private boolean hasViews;
-
-        public ReportCell(Context context) {
-            super(context);
-            setTag(90);
-
-            textView = new TextView(context);
-            textView.setText(LocaleController.getString("PreviewFeedback2", R.string.PreviewFeedback2));
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
-            textView.setGravity(Gravity.CENTER);
-            textView.setPadding(AndroidUtilities.dp(18), 0, AndroidUtilities.dp(18), 0);
-            addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 34, Gravity.LEFT | Gravity.TOP, 0, 10, 0, 0));
-
-            viewsTextView = new TextView(context);
-            viewsTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
-            viewsTextView.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-            viewsTextView.setPadding(AndroidUtilities.dp(18), 0, AndroidUtilities.dp(18), 0);
-            addView(viewsTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 34, Gravity.LEFT | Gravity.TOP, 0, 10, 0, 0));
-        }
-
-        @Override
-        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(44), MeasureSpec.EXACTLY));
-        }
-
-        public void setViews(int count) {
-            if (count == 0) {
-                hasViews = false;
-                viewsTextView.setVisibility(GONE);
-                textView.setGravity(Gravity.CENTER);
-            } else {
-                hasViews = true;
-                viewsTextView.setVisibility(VISIBLE);
-                textView.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
-                viewsTextView.setText(LocaleController.formatPluralString("Views", count));
-            }
-            int color = Theme.getColor(Theme.key_switchTrack);
-            textView.setTextColor(getGrayTextColor());
-            viewsTextView.setTextColor(getGrayTextColor());
-            textView.setBackgroundColor(Color.argb(34, Color.red(color), Color.green(color), Color.blue(color)));
-        }
-    }
-
     private void drawTextSelection(Canvas canvas, TextSelectionHelper.ArticleSelectableView view) {
         drawTextSelection(canvas, view, 0);
     }
@@ -11463,7 +11410,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
     //------------ photo viewer
 
-    private static class LinkMovementMethodMy extends LinkMovementMethod {
+    private class LinkMovementMethodMy extends LinkMovementMethod {
         @Override
         public boolean onTouchEvent(@NonNull TextView widget, @NonNull Spannable buffer, @NonNull MotionEvent event) {
             try {
@@ -12567,7 +12514,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
         float scaleX = (float) AndroidUtilities.displaySize.x / layoutParams.width;
         float scaleY = (float) AndroidUtilities.displaySize.y / layoutParams.height;
-        float scale = Math.min(scaleX, scaleY);
+        float scale = scaleX > scaleY ? scaleY : scaleX;
         float width = layoutParams.width * scale;
         float height = layoutParams.height * scale;
         float xPos = (AndroidUtilities.displaySize.x - width) / 2.0f;
@@ -12745,7 +12692,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
             float scaleX = (float) AndroidUtilities.displaySize.x / layoutParams.width;
             float scaleY = (float) AndroidUtilities.displaySize.y / layoutParams.height;
-            float scale2 = Math.min(scaleX, scaleY);
+            float scale2 = scaleX > scaleY ? scaleY : scaleX;
             float width = layoutParams.width * scale * scale2;
             float height = layoutParams.height * scale * scale2;
             float xPos = (AndroidUtilities.displaySize.x - width) / 2.0f;
@@ -13298,7 +13245,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
                 float scaleX = (float) getContainerViewWidth() / (float) bitmapWidth;
                 float scaleY = (float) getContainerViewHeight() / (float) bitmapHeight;
-                float scale = Math.min(scaleX, scaleY);
+                float scale = scaleX > scaleY ? scaleY : scaleX;
                 int width = (int) (bitmapWidth * scale);
                 int height = (int) (bitmapHeight * scale);
 
@@ -13347,7 +13294,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
             float scaleX = (float) getContainerViewWidth() / (float) bitmapWidth;
             float scaleY = (float) getContainerViewHeight() / (float) bitmapHeight;
-            float scale = Math.min(scaleX, scaleY);
+            float scale = scaleX > scaleY ? scaleY : scaleX;
             int width = (int) (bitmapWidth * scale);
             int height = (int) (bitmapHeight * scale);
 
@@ -13397,7 +13344,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
                 float scaleX = (float) getContainerViewWidth() / (float) bitmapWidth;
                 float scaleY = (float) getContainerViewHeight() / (float) bitmapHeight;
-                float scale = Math.min(scaleX, scaleY);
+                float scale = scaleX > scaleY ? scaleY : scaleX;
                 int width = (int) (bitmapWidth * scale);
                 int height = (int) (bitmapHeight * scale);
 

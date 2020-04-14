@@ -8,24 +8,17 @@
 
 package org.telegram.ui.Cells;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextUtils;
-import android.util.Property;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.SoundEffectConstants;
+import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.AccelerateInterpolator;
-import android.widget.FrameLayout;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DownloadController;
@@ -44,9 +37,6 @@ import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.WebFile;
 import org.telegram.tgnet.TLRPC;
-import org.telegram.ui.Components.AnimationProperties;
-import org.telegram.ui.Components.CheckBox2;
-import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.LetterDrawable;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.MediaActionDrawable;
@@ -57,7 +47,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Locale;
 
-public class ContextLinkCell extends FrameLayout implements DownloadController.FileDownloadProgressListener {
+public class ContextLinkCell extends View implements DownloadController.FileDownloadProgressListener {
 
     private final static int DOCUMENT_ATTACH_TYPE_NONE = 0;
     private final static int DOCUMENT_ATTACH_TYPE_DOCUMENT = 1;
@@ -96,16 +86,11 @@ public class ContextLinkCell extends FrameLayout implements DownloadController.F
 
     private TLRPC.BotInlineResult inlineResult;
     private TLRPC.Document documentAttach;
-    private int currentDate;
     private TLRPC.Photo photoAttach;
     private TLRPC.PhotoSize currentPhotoObject;
     private int documentAttachType;
     private boolean mediaWebpage;
     private MessageObject currentMessageObject;
-
-    private AnimatorSet animator;
-
-    private Paint backgroundPaint;
 
     private int TAG;
     private int buttonState;
@@ -116,15 +101,9 @@ public class ContextLinkCell extends FrameLayout implements DownloadController.F
     private float scale;
     private static AccelerateInterpolator interpolator = new AccelerateInterpolator(0.5f);
 
-    private CheckBox2 checkBox;
-
     private ContextLinkCellDelegate delegate;
 
     public ContextLinkCell(Context context) {
-        this(context, false);
-    }
-
-    public ContextLinkCell(Context context, boolean needsCheckBox) {
         super(context);
 
         linkImageView = new ImageReceiver(this);
@@ -134,19 +113,6 @@ public class ContextLinkCell extends FrameLayout implements DownloadController.F
         radialProgress = new RadialProgress2(this);
         TAG = DownloadController.getInstance(currentAccount).generateObserverTag();
         setFocusable(true);
-
-        if (needsCheckBox) {
-            backgroundPaint = new Paint();
-            backgroundPaint.setColor(Theme.getColor(Theme.key_sharedMedia_photoPlaceholder));
-
-            checkBox = new CheckBox2(context, 21);
-            checkBox.setVisibility(INVISIBLE);
-            checkBox.setColor(null, Theme.key_sharedMedia_photoPlaceholder, Theme.key_checkboxCheck);
-            checkBox.setDrawUnchecked(false);
-            checkBox.setDrawBackgroundAsArc(1);
-            addView(checkBox, LayoutHelper.createFrame(24, 24, Gravity.RIGHT | Gravity.TOP, 0, 1, 1, 0));
-        }
-        setWillNotDraw(false);
     }
 
     @SuppressLint("DrawAllocation")
@@ -376,9 +342,6 @@ public class ContextLinkCell extends FrameLayout implements DownloadController.F
                 radialProgress.setProgressRect(x + AndroidUtilities.dp(4), AndroidUtilities.dp(12), x + AndroidUtilities.dp(48), AndroidUtilities.dp(56));
             }
         }
-        if (checkBox != null) {
-            measureChildWithMargins(checkBox, widthMeasureSpec, 0, heightMeasureSpec, 0);
-        }
     }
 
     private void setAttachType() {
@@ -467,20 +430,11 @@ public class ContextLinkCell extends FrameLayout implements DownloadController.F
         updateButtonState(false, false);
     }
 
-    public Object getParentObject() {
-        return parentObject;
-    }
-
     public void setGif(TLRPC.Document document, boolean divider) {
-        setGif(document, "gif" + document, 0, divider);
-    }
-
-    public void setGif(TLRPC.Document document, Object parent, int date, boolean divider) {
         needDivider = divider;
         needShadow = false;
-        currentDate = date;
         inlineResult = null;
-        parentObject = parent;
+        parentObject = "gif" + document;
         documentAttach = document;
         photoAttach = null;
         mediaWebpage = true;
@@ -499,10 +453,6 @@ public class ContextLinkCell extends FrameLayout implements DownloadController.F
 
     public boolean showingBitmap() {
         return linkImageView.getBitmap() != null;
-    }
-
-    public int getDate() {
-        return currentDate;
     }
 
     public TLRPC.Document getDocument() {
@@ -663,11 +613,6 @@ public class ContextLinkCell extends FrameLayout implements DownloadController.F
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (checkBox != null) {
-            if (checkBox.isChecked() || !linkImageView.hasBitmapImage() || linkImageView.getCurrentAlpha() != 1.0f || PhotoViewer.isShowingImage((MessageObject) parentObject)) {
-                canvas.drawRect(0, 0, getMeasuredWidth(), getMeasuredHeight(), backgroundPaint);
-            }
-        }
         if (titleLayout != null) {
             canvas.save();
             canvas.translate(AndroidUtilities.dp(LocaleController.isRTL ? 8 : AndroidUtilities.leftBaseline), titleY);
@@ -760,7 +705,7 @@ public class ContextLinkCell extends FrameLayout implements DownloadController.F
                 }
                 invalidate();
             }
-            canvas.scale(scale * imageScale, scale * imageScale, getMeasuredWidth() / 2, getMeasuredHeight() / 2);
+            canvas.scale(scale, scale, getMeasuredWidth() / 2, getMeasuredHeight() / 2);
             linkImageView.draw(canvas);
             canvas.restore();
         }
@@ -969,66 +914,5 @@ public class ContextLinkCell extends FrameLayout implements DownloadController.F
                 break;
         }
         info.setText(sbuf);
-        if (checkBox != null && checkBox.isChecked()) {
-            info.setCheckable(true);
-            info.setChecked(true);
-        }
-    }
-
-    private float imageScale = 1.0f;
-
-    public final Property<ContextLinkCell, Float> IMAGE_SCALE = new AnimationProperties.FloatProperty<ContextLinkCell>("animationValue") {
-        @Override
-        public void setValue(ContextLinkCell object, float value) {
-            imageScale = value;
-            invalidate();
-        }
-
-        @Override
-        public Float get(ContextLinkCell object) {
-            return imageScale;
-        }
-    };
-
-    public void setChecked(boolean checked, boolean animated) {
-        if (checkBox == null) {
-            return;
-        }
-        if (checkBox.getVisibility() != VISIBLE) {
-            checkBox.setVisibility(VISIBLE);
-        }
-        checkBox.setChecked(checked, animated);
-        if (animator != null) {
-            animator.cancel();
-            animator = null;
-        }
-        if (animated) {
-            animator = new AnimatorSet();
-            animator.playTogether(
-                    ObjectAnimator.ofFloat(this, IMAGE_SCALE, checked ? 0.81f : 1.0f));
-            animator.setDuration(200);
-            animator.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    if (animator != null && animator.equals(animation)) {
-                        animator = null;
-                        if (!checked) {
-                            setBackgroundColor(0);
-                        }
-                    }
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-                    if (animator != null && animator.equals(animation)) {
-                        animator = null;
-                    }
-                }
-            });
-            animator.start();
-        } else {
-            imageScale = checked ? 0.85f : 1.0f;
-            invalidate();
-        }
     }
 }

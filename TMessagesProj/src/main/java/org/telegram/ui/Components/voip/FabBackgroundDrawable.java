@@ -14,8 +14,6 @@ import android.graphics.drawable.Drawable;
 
 import org.telegram.messenger.AndroidUtilities;
 
-import androidx.annotation.Keep;
-
 public class FabBackgroundDrawable extends Drawable {
 
     private Paint bgPaint, shadowPaint;
@@ -49,7 +47,7 @@ public class FabBackgroundDrawable extends Drawable {
 
     @Override
     public int getOpacity() {
-        return PixelFormat.TRANSPARENT;
+        return 0;
     }
 
     @Override
@@ -66,7 +64,6 @@ public class FabBackgroundDrawable extends Drawable {
         c.drawCircle(size / 2, size / 2, size / 2 - AndroidUtilities.dp(4), p);
     }
 
-    @Keep
     public void setColor(int color) {
         bgPaint.setColor(color);
         invalidateSelf();

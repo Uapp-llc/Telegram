@@ -25,8 +25,6 @@ import org.telegram.messenger.AndroidUtilities;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import androidx.annotation.Keep;
-
 public class NumberTextView extends View {
 
     private ArrayList<StaticLayout> letters = new ArrayList<>();
@@ -40,7 +38,6 @@ public class NumberTextView extends View {
         super(context);
     }
 
-    @Keep
     public void setProgress(float value) {
         if (progress == value) {
             return;
@@ -49,7 +46,6 @@ public class NumberTextView extends View {
         invalidate();
     }
 
-    @Keep
     public float getProgress() {
         return progress;
     }

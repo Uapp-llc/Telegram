@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.SystemClock;
 
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.MessagesController;
 import org.telegram.tgnet.TLRPC;

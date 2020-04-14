@@ -80,7 +80,7 @@ public class NotificationCenter {
     public static final int reloadInlineHints = totalEvents++;
     public static final int newDraftReceived = totalEvents++;
     public static final int recentDocumentsDidLoad = totalEvents++;
-    public static final int needAddArchivedStickers = totalEvents++;
+    public static final int needReloadArchivedStickers = totalEvents++;
     public static final int archivedStickersCountDidLoad = totalEvents++;
     public static final int paymentFinished = totalEvents++;
     public static final int channelRightsUpdated = totalEvents++;
@@ -95,6 +95,9 @@ public class NotificationCenter {
     public static final int sendingMessagesChanged = totalEvents++;
     public static final int didUpdateReactions = totalEvents++;
     public static final int scheduledMessagesUpdated = totalEvents++;
+
+    public static final int refreshCategories = totalEvents++;
+    public static final int refreshDialogsWithCategoriesList = totalEvents++;
 
     public static final int walletPendingTransactionsChanged = totalEvents++;
     public static final int walletSyncProgressChanged = totalEvents++;
@@ -146,10 +149,6 @@ public class NotificationCenter {
 
     public static final int themeUploadedToServer = totalEvents++;
     public static final int themeUploadError = totalEvents++;
-
-    public static final int dialogFiltersUpdated = totalEvents++;
-    public static final int filterSettingsUpdated = totalEvents++;
-    public static final int suggestedFiltersLoaded = totalEvents++;
 
     //global
     public static final int pushMessagesUpdated = totalEvents++;

@@ -240,7 +240,7 @@ public class AlertsCreator {
             } else if (error.text.startsWith("FLOOD_WAIT")) {
                 showSimpleAlert(fragment, LocaleController.getString("FloodWait", R.string.FloodWait));
             } else if (error.text.startsWith("PHONE_NUMBER_OCCUPIED")) {
-                showSimpleAlert(fragment, LocaleController.formatString("ChangePhoneNumberOccupied", R.string.ChangePhoneNumberOccupied, args[0]));
+                showSimpleAlert(fragment, LocaleController.formatString("ChangePhoneNumberOccupied", R.string.ChangePhoneNumberOccupied, (String) args[0]));
             } else {
                 showSimpleAlert(fragment, LocaleController.getString("ErrorOccurred", R.string.ErrorOccurred));
             }
@@ -564,10 +564,14 @@ public class AlertsCreator {
     }
 
     public static void showCustomNotificationsDialog(BaseFragment parentFragment, long did, int globalType, ArrayList<NotificationsSettingsActivity.NotificationException> exceptions, int currentAccount, MessagesStorage.IntCallback callback) {
-        showCustomNotificationsDialog(parentFragment, did, globalType, exceptions, currentAccount, callback, null);
+        showCustomNotificationsDialog(parentFragment, did, globalType, -1, exceptions, currentAccount, callback, null);
     }
 
-    public static void showCustomNotificationsDialog(BaseFragment parentFragment, long did, int globalType, ArrayList<NotificationsSettingsActivity.NotificationException> exceptions, int currentAccount, MessagesStorage.IntCallback callback, MessagesStorage.IntCallback resultCallback) {
+    public static void showCustomNotificationsDialog(BaseFragment parentFragment, long did, int globalType, long categoryId, ArrayList<NotificationsSettingsActivity.NotificationException> exceptions, int currentAccount, MessagesStorage.IntCallback callback) {
+        showCustomNotificationsDialog(parentFragment, did, globalType, categoryId, exceptions, currentAccount, callback, null);
+    }
+
+    public static void showCustomNotificationsDialog(BaseFragment parentFragment, long did, int globalType,  long categoryId, ArrayList<NotificationsSettingsActivity.NotificationException> exceptions, int currentAccount, MessagesStorage.IntCallback callback, MessagesStorage.IntCallback resultCallback) {
         if (parentFragment == null || parentFragment.getParentActivity() == null) {
             return;
         }
@@ -645,7 +649,7 @@ public class AlertsCreator {
                             }
                         }
                     } else {
-                        NotificationsController.getInstance(currentAccount).setGlobalNotificationsEnabled(globalType, 0);
+                        NotificationsController.getInstance(currentAccount).setGlobalNotificationsEnabled(globalType, 0, categoryId);
                     }
                 } else if (i == 3) {
                     if (did != 0) {
@@ -702,9 +706,9 @@ public class AlertsCreator {
                         }
                     } else {
                         if (i == 4) {
-                            NotificationsController.getInstance(currentAccount).setGlobalNotificationsEnabled(globalType, Integer.MAX_VALUE);
+                            NotificationsController.getInstance(currentAccount).setGlobalNotificationsEnabled(globalType, Integer.MAX_VALUE, categoryId);
                         } else {
-                            NotificationsController.getInstance(currentAccount).setGlobalNotificationsEnabled(globalType, untilTime);
+                            NotificationsController.getInstance(currentAccount).setGlobalNotificationsEnabled(globalType, untilTime, categoryId);
                         }
                     }
                 }
@@ -1030,11 +1034,9 @@ public class AlertsCreator {
 
         if (user != null) {
             if (user.id == selfUserId) {
-                avatarDrawable.setSmallSize(true);
-                avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_SAVED);
+                avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_SAVED_SMALL);
                 imageView.setImage(null, null, avatarDrawable, user);
             } else {
-                avatarDrawable.setSmallSize(false);
                 avatarDrawable.setInfo(user);
                 imageView.setImage(ImageLocation.getForUser(user, false), "50_50", avatarDrawable, user);
             }
@@ -1759,11 +1761,7 @@ public class AlertsCreator {
                 break;
             case "CHAT_ADMIN_BAN_REQUIRED":
             case "USER_KICKED":
-                if (request instanceof TLRPC.TL_channels_inviteToChannel) {
-                    builder.setMessage(LocaleController.getString("AddUserErrorBlacklisted", R.string.AddUserErrorBlacklisted));
-                } else {
-                    builder.setMessage(LocaleController.getString("AddAdminErrorBlacklisted", R.string.AddAdminErrorBlacklisted));
-                }
+                builder.setMessage(LocaleController.getString("AddAdminErrorBlacklisted", R.string.AddAdminErrorBlacklisted));
                 break;
             case "CHAT_ADMIN_INVITE_REQUIRED":
                 builder.setMessage(LocaleController.getString("AddAdminErrorNotAMember", R.string.AddAdminErrorNotAMember));
@@ -1797,7 +1795,7 @@ public class AlertsCreator {
         fragment.showDialog(builder.create(), true, null);
     }
 
-    public static Dialog createColorSelectDialog(Activity parentActivity, final long dialog_id, final int globalType, final Runnable onSelect) {
+    public static Dialog createColorSelectDialog(Activity parentActivity, final long dialog_id, final int globalType, long categoryId, final Runnable onSelect) {
         int currentColor;
         SharedPreferences preferences = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
         if (dialog_id != 0) {
@@ -1814,8 +1812,10 @@ public class AlertsCreator {
             currentColor = preferences.getInt("MessagesLed", 0xff0000ff);
         } else if (globalType == NotificationsController.TYPE_GROUP) {
             currentColor = preferences.getInt("GroupLed", 0xff0000ff);
-        } else {
+        } else if (globalType == NotificationsController.TYPE_CHANNEL){
             currentColor = preferences.getInt("ChannelLed", 0xff0000ff);
+        } else{
+            currentColor = preferences.getInt(String.format("CategoryLed_%d", categoryId), 0xff0000ff);
         }
         final LinearLayout linearLayout = new LinearLayout(parentActivity);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
@@ -1857,8 +1857,10 @@ public class AlertsCreator {
                 editor.putInt("MessagesLed", selectedColor[0]);
             } else if (globalType == NotificationsController.TYPE_GROUP) {
                 editor.putInt("GroupLed", selectedColor[0]);
-            } else {
+            } if (globalType == NotificationsController.TYPE_CHANNEL){
                 editor.putInt("ChannelLed", selectedColor[0]);
+            } else{
+                editor.putInt(String.format("CategoryLed_%d", categoryId), selectedColor[0]);
             }
             editor.commit();
             if (onSelect != null) {
@@ -1874,8 +1876,10 @@ public class AlertsCreator {
                 editor.putInt("MessagesLed", 0);
             } else if (globalType == NotificationsController.TYPE_GROUP) {
                 editor.putInt("GroupLed", 0);
-            } else {
+            } if (globalType == NotificationsController.TYPE_CHANNEL){
                 editor.putInt("ChannelLed", 0);
+            } else{
+                editor.putInt(String.format("CategoryLed_%d", categoryId), 0);
             }
             editor.commit();
             if (onSelect != null) {
@@ -2129,7 +2133,7 @@ public class AlertsCreator {
         return builder.create();
     }
 
-    public static Dialog createPrioritySelectDialog(Activity parentActivity, final long dialog_id, final int globalType, final Runnable onSelect) {
+    public static Dialog createPrioritySelectDialog(Activity parentActivity, final long dialog_id, final int globalType, long categoryId, final Runnable onSelect) {
         SharedPreferences preferences = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
         final int[] selected = new int[1];
         String[] descriptions;
@@ -2161,6 +2165,8 @@ public class AlertsCreator {
                     selected[0] = preferences.getInt("priority_group", 1);
                 } else if (globalType == NotificationsController.TYPE_CHANNEL) {
                     selected[0] = preferences.getInt("priority_channel", 1);
+                } else{
+                    selected[0] = preferences.getInt(String.format("priority_category_%d", categoryId), 1);
                 }
             }
             if (selected[0] == 4) {
@@ -2230,6 +2236,9 @@ public class AlertsCreator {
                     } else if (globalType == NotificationsController.TYPE_CHANNEL) {
                         editor.putInt("priority_channel", option);
                         selected[0] = preferences.getInt("priority_channel", 1);
+                    } else{
+                        editor.putInt( String.format("priority_category_%d", categoryId), option);
+                        selected[0] = preferences.getInt( String.format("priority_category_%d", categoryId), 1);
                     }
                 }
                 editor.commit();
@@ -2245,15 +2254,17 @@ public class AlertsCreator {
         return builder.create();
     }
 
-    public static Dialog createPopupSelectDialog(Activity parentActivity, final int globalType, final Runnable onSelect) {
+    public static Dialog createPopupSelectDialog(Activity parentActivity, final int globalType, long categoryId, final Runnable onSelect) {
         SharedPreferences preferences = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
         final int[] selected = new int[1];
         if (globalType == NotificationsController.TYPE_PRIVATE) {
             selected[0] = preferences.getInt("popupAll", 0);
         } else if (globalType == NotificationsController.TYPE_GROUP) {
             selected[0] = preferences.getInt("popupGroup", 0);
-        } else {
+        } else if (globalType == NotificationsController.TYPE_CHANNEL) {
             selected[0] = preferences.getInt("popupChannel", 0);
+        } else{
+            selected[0] = preferences.getInt(String.format("popupCategory_%d", categoryId), 0);
         }
         String[] descriptions = new String[]{
                 LocaleController.getString("NoPopup", R.string.NoPopup),
@@ -2282,8 +2293,10 @@ public class AlertsCreator {
                     editor.putInt("popupAll", selected[0]);
                 } else if (globalType == NotificationsController.TYPE_GROUP) {
                     editor.putInt("popupGroup", selected[0]);
-                } else {
+                } else if (globalType == NotificationsController.TYPE_CHANNEL) {
                     editor.putInt("popupChannel", selected[0]);
+                } else{
+                    editor.putInt(String.format("popupCategory_%d", categoryId), selected[0]);
                 }
                 editor.commit();
                 builder.getDismissRunnable().run();

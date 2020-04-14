@@ -39,9 +39,7 @@ class AudioOutputAudioUnit;
 		std::string currentInputDevice;
 		std::string currentOutputDevice;
 		bool duckingEnabled=true;
-#ifndef TGVOIP_NO_OSX_PRIVATE_API
 		bool actualDuckingEnabled=true;
-#endif // TGVOIP_NO_OSX_PRIVATE_API
 		AudioDeviceID currentOutputDeviceID;
 #endif
 		AudioComponentInstance unit;

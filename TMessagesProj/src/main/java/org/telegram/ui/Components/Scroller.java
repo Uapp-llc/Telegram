@@ -18,6 +18,7 @@ package org.telegram.ui.Components;
 
 import android.content.Context;
 import android.hardware.SensorManager;
+import android.util.FloatMath;
 import android.view.ViewConfiguration;
 import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;

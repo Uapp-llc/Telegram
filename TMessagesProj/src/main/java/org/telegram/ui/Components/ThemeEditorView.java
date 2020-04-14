@@ -1065,7 +1065,6 @@ public class ThemeEditorView {
             }
         }
 
-        @Keep
         public int getScrollOffsetY() {
             return scrollOffsetY;
         }
@@ -1710,12 +1709,10 @@ public class ThemeEditorView {
         }
     }
 
-    @Keep
     public int getX() {
         return windowLayoutParams.x;
     }
 
-    @Keep
     public int getY() {
         return windowLayoutParams.y;
     }

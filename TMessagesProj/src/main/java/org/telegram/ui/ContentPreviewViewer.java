@@ -113,8 +113,6 @@ public class ContentPreviewViewer {
     private BottomSheet visibleDialog;
     private ContentPreviewViewerDelegate delegate;
 
-    private boolean isRecentSticker;
-
     private WindowInsets lastInsets;
 
     private int currentAccount;
@@ -166,11 +164,6 @@ public class ContentPreviewViewer {
                     icons.add(inFavs ? R.drawable.outline_unfave : R.drawable.outline_fave);
                     actions.add(2);
                 }
-                if (isRecentSticker) {
-                    items.add(LocaleController.getString("DeleteFromRecent", R.string.DeleteFromRecent));
-                    icons.add(R.drawable.msg_delete);
-                    actions.add(4);
-                }
                 if (items.isEmpty()) {
                     return;
                 }
@@ -197,8 +190,6 @@ public class ContentPreviewViewer {
                         Object parent = parentObject;
                         ContentPreviewViewerDelegate stickerPreviewViewerDelegate = delegate;
                         AlertsCreator.createScheduleDatePickerDialog(parentActivity, stickerPreviewViewerDelegate.getDialogId(), (notify, scheduleDate) -> stickerPreviewViewerDelegate.sendSticker(sticker, parent, notify, scheduleDate));
-                    } else if (actions.get(which) == 4) {
-                        MediaDataController.getInstance(currentAccount).addRecentSticker(MediaDataController.TYPE_IMAGE, parentObject, currentDocument, (int) (System.currentTimeMillis() / 1000), true);
                     }
                 });
                 builder.setDimBehind(false);
@@ -623,7 +614,6 @@ public class ContentPreviewViewer {
         if (parentActivity == null || windowView == null) {
             return;
         }
-        isRecentSticker = isRecent;
         stickerEmojiLayout = null;
         if (contentType == CONTENT_TYPE_STICKER) {
             if (document == null) {

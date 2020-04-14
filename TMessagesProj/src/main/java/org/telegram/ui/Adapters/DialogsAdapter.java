@@ -75,14 +75,14 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
     private long lastSortTime;
     private PullForegroundDrawable pullForegroundDrawable;
 
-    public DialogsAdapter(Context context, int type, int folder, boolean onlySelect, ArrayList<Long> selected) {
+    public DialogsAdapter(Context context, int type, int folder, boolean onlySelect) {
         mContext = context;
         dialogsType = type;
         folderId = folder;
         isOnlySelect = onlySelect;
         hasHints = folder == 0 && type == 0 && !onlySelect;
-        selectedDialogs = selected;
-        if (folderId == 1) {
+        selectedDialogs = new ArrayList<>();
+        if (folderId == 1 && dialogsType != 8) {
             SharedPreferences preferences = MessagesController.getGlobalMainSettings();
             showArchiveHint = preferences.getBoolean("archivehint", true);
             preferences.edit().putBoolean("archivehint", false).commit();
@@ -94,6 +94,30 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
 
     public void setOpenedDialogId(long id) {
         openedDialogId = id;
+    }
+
+    public boolean hasSelectedDialogs() {
+        return selectedDialogs != null && !selectedDialogs.isEmpty();
+    }
+
+    public boolean addOrRemoveSelectedDialog(long did, View cell) {
+        if (selectedDialogs.contains(did)) {
+            selectedDialogs.remove(did);
+            if (cell instanceof DialogCell) {
+                ((DialogCell) cell).setChecked(false, true);
+            }
+            return false;
+        } else {
+            selectedDialogs.add(did);
+            if (cell instanceof DialogCell) {
+                ((DialogCell) cell).setChecked(true, true);
+            }
+            return true;
+        }
+    }
+
+    public ArrayList<Long> getSelectedDialogs() {
+        return selectedDialogs;
     }
 
     public void onReorderStateChanged(boolean reordering) {
@@ -115,16 +139,14 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
         return current != getItemCount() || current == 1;
     }
 
-    public void setDialogsType(int type) {
-        dialogsType = type;
-        notifyDataSetChanged();
-    }
-
     @Override
     public int getItemCount() {
         ArrayList<TLRPC.Dialog> array = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen);
+        if(array == null){
+            array = new ArrayList<TLRPC.Dialog>();
+        }
         int dialogsCount = array.size();
-        if (dialogsType != 7 && dialogsType != 8 && dialogsCount == 0 && (folderId != 0 || MessagesController.getInstance(currentAccount).isLoadingDialogs(folderId))) {
+        if (dialogsCount == 0 && (folderId != 0 || MessagesController.getInstance(currentAccount).isLoadingDialogs(folderId))) {
             onlineContacts = null;
             if (folderId == 1 && showArchiveHint) {
                 return (currentCount = 2);
@@ -132,14 +154,8 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
             return (currentCount = 0);
         }
         int count = dialogsCount;
-        if (dialogsType == 7 || dialogsType == 8) {
-            if (dialogsCount == 0) {
-                count++;
-            }
-        } else {
-            if (!MessagesController.getInstance(currentAccount).isDialogsEndReached(folderId) || dialogsCount == 0) {
-                count++;
-            }
+        if (!MessagesController.getInstance(currentAccount).isDialogsEndReached(folderId) || dialogsCount == 0) {
+            count++;
         }
         boolean hasContacts = false;
         if (hasHints) {
@@ -374,39 +390,27 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
                     @Override
                     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
                         int size = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen).size();
-                        boolean hasArchive = dialogsType == 0 && MessagesController.getInstance(currentAccount).dialogs_dict.get(DialogObject.makeFolderDialogId(1)) != null;
-                        View parent = (View) getParent();
+                        boolean hasArchive = MessagesController.getInstance(currentAccount).dialogs_dict.get(DialogObject.makeFolderDialogId(1)) != null;
                         int height;
-                        int paddingTop = parent.getPaddingTop();
-                        if (size == 0 || paddingTop == 0 && !hasArchive) {
+                        if (size == 0 || !hasArchive) {
                             height = 0;
                         } else {
                             height = MeasureSpec.getSize(heightMeasureSpec);
                             if (height == 0) {
-                                height = parent.getMeasuredHeight();
+                                View parent = (View) getParent();
+                                if (parent != null) {
+                                    height = parent.getMeasuredHeight();
+                                }
                             }
                             if (height == 0) {
                                 height = AndroidUtilities.displaySize.y - ActionBar.getCurrentActionBarHeight() - (Build.VERSION.SDK_INT >= 21 ? AndroidUtilities.statusBarHeight : 0);
                             }
                             int cellHeight = AndroidUtilities.dp(SharedConfig.useThreeLinesLayout ? 78 : 72);
                             int dialogsHeight = size * cellHeight + (size - 1);
-                            int archiveHeight = (hasArchive ? cellHeight + 1 : 0);
                             if (dialogsHeight < height) {
-                                height = height - dialogsHeight + archiveHeight;
-                                if (paddingTop != 0) {
-                                    height -= AndroidUtilities.statusBarHeight;
-                                    if (height < 0) {
-                                        height = 0;
-                                    }
-                                }
-                            } else if (dialogsHeight - height < archiveHeight) {
-                                height = archiveHeight - (dialogsHeight - height);
-                                if (paddingTop != 0) {
-                                    height -= AndroidUtilities.statusBarHeight;
-                                }
-                                if (height < 0) {
-                                    height = 0;
-                                }
+                                height = height - dialogsHeight + cellHeight + 1;
+                            } else if (dialogsHeight - height < cellHeight + 1) {
+                                height = cellHeight + 1 - (dialogsHeight - height);
                             } else {
                                 height = 0;
                             }
@@ -444,15 +448,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
             }
             case 5: {
                 DialogsEmptyCell cell = (DialogsEmptyCell) holder.itemView;
-                if (dialogsType == 7 || dialogsType == 8) {
-                    if (MessagesController.getInstance(currentAccount).isDialogsEndReached(folderId)) {
-                        cell.setType(2);
-                    } else {
-                        cell.setType(3);
-                    }
-                } else {
-                    cell.setType(onlineContacts != null ? 1 : 0);
-                }
+                cell.setType(onlineContacts != null ? 1 : 0);
                 break;
             }
             case 4: {
@@ -504,7 +500,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
         }
         int size = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen).size();
         if (i == size) {
-            if (dialogsType != 7 && dialogsType != 8 && !MessagesController.getInstance(currentAccount).isDialogsEndReached(folderId)) {
+            if (!MessagesController.getInstance(currentAccount).isDialogsEndReached(folderId)) {
                 return 1;
             } else if (size == 0) {
                 return 5;
@@ -524,17 +520,9 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
         int toIndex = fixPosition(toPosition);
         TLRPC.Dialog fromDialog = dialogs.get(fromIndex);
         TLRPC.Dialog toDialog = dialogs.get(toIndex);
-        if (dialogsType == 7 || dialogsType == 8) {
-            MessagesController.DialogFilter filter = MessagesController.getInstance(currentAccount).selectedDialogFilter[dialogsType == 8 ? 1 : 0];
-            int idx1 = filter.pinnedDialogs.get(fromDialog.id);
-            int idx2 = filter.pinnedDialogs.get(toDialog.id);
-            filter.pinnedDialogs.put(fromDialog.id, idx2);
-            filter.pinnedDialogs.put(toDialog.id, idx1);
-        } else {
-            int oldNum = fromDialog.pinnedNum;
-            fromDialog.pinnedNum = toDialog.pinnedNum;
-            toDialog.pinnedNum = oldNum;
-        }
+        int oldNum = fromDialog.pinnedNum;
+        fromDialog.pinnedNum = toDialog.pinnedNum;
+        toDialog.pinnedNum = oldNum;
         Collections.swap(dialogs, fromIndex, toIndex);
         super.notifyItemMoved(fromPosition, toPosition);
     }

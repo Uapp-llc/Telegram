@@ -522,12 +522,10 @@ public class PipRoundVideoView implements NotificationCenter.NotificationCenterD
         }
     }
 
-    @Keep
     public int getX() {
         return windowLayoutParams.x;
     }
 
-    @Keep
     public int getY() {
         return windowLayoutParams.y;
     }

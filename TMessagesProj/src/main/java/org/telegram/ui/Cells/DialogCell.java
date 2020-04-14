@@ -27,7 +27,6 @@ import android.view.HapticFeedbackConstants;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.Interpolator;
-
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.MediaDataController;
@@ -35,7 +34,6 @@ import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
-import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.FileLog;
@@ -48,6 +46,7 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.ImageReceiver;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.Category;
 import org.telegram.ui.Components.PullForegroundDrawable;
 import org.telegram.ui.Components.AvatarDrawable;
 import org.telegram.ui.Components.CheckBox2;
@@ -99,6 +98,11 @@ public class DialogCell extends BaseCell {
     private int folderId;
     private int messageId;
     private boolean archiveHidden;
+
+    private int categoryId;
+    public boolean isCategory = false;
+    private String categoryAvatar = "";
+    private String categoryName = "";
 
     private float cornerProgress;
     private long lastUpdateTime;
@@ -199,7 +203,7 @@ public class DialogCell extends BaseCell {
 
     private RectF rect = new RectF();
 
-    public static class BounceInterpolator implements Interpolator {
+    public class BounceInterpolator implements Interpolator {
 
         public float getInterpolation(float t) {
             if (t < 0.33f) {
@@ -233,15 +237,24 @@ public class DialogCell extends BaseCell {
     }
 
     public void setDialog(TLRPC.Dialog dialog, int type, int folder) {
-        currentDialogId = dialog.id;
         isDialogCell = true;
         if (dialog instanceof TLRPC.TL_dialogFolder) {
+            currentDialogId = dialog.id;
             TLRPC.TL_dialogFolder dialogFolder = (TLRPC.TL_dialogFolder) dialog;
             currentDialogFolderId = dialogFolder.folder.id;
             if (archivedChatsDrawable != null) {
                 archivedChatsDrawable.setCell(this);
             }
+            isCategory = false;
+        } else if (dialog instanceof Category) {
+            Category category = (Category) dialog;
+            categoryId = (int) category.getId();
+            isCategory = true;
+            categoryAvatar = category.getAvatar();
+            categoryName = category.getName();
         } else {
+            currentDialogId = dialog.id;
+            isCategory = false;
             currentDialogFolderId = 0;
         }
         dialogsType = type;
@@ -347,7 +360,7 @@ public class DialogCell extends BaseCell {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        if (currentDialogId == 0 && customDialog == null) {
+        if (currentDialogId == 0 && customDialog == null && !isCategory) {
             return;
         }
         if (checkBox != null) {
@@ -368,8 +381,16 @@ public class DialogCell extends BaseCell {
         return (unreadCount != 0 || markUnread) && !dialogMuted;
     }
 
-    private CharSequence formatArchivedDialogNames() {
-        ArrayList<TLRPC.Dialog> dialogs = MessagesController.getInstance(currentAccount).getDialogs(currentDialogFolderId);
+    private CharSequence formatFolderedDialogNames() {
+        ArrayList<TLRPC.Dialog> dialogs;
+        if (isCategory) {
+            dialogs = MessagesController.getInstance(currentAccount).chosenDialogsByCategory.get(categoryId);
+        } else {
+            dialogs = MessagesController.getInstance(currentAccount).getDialogs(currentDialogFolderId);
+        }
+        if (dialogs == null) {
+            dialogs = new ArrayList<>();
+        }
         currentDialogFolderDialogsCount = dialogs.size();
         SpannableStringBuilder builder = new SpannableStringBuilder();
         for (int a = 0, N = dialogs.size(); a < N; a++) {
@@ -463,7 +484,7 @@ public class DialogCell extends BaseCell {
         String messageFormat;
         boolean hasNameInMessage;
         if (Build.VERSION.SDK_INT >= 18) {
-            if (!useForceThreeLines && !SharedConfig.useThreeLinesLayout || currentDialogFolderId != 0) {
+            if (!useForceThreeLines && !SharedConfig.useThreeLinesLayout || currentDialogFolderId != 0 || isCategory) {
                 messageFormat = "%2$s: \u2068%1$s\u2069";
                 hasNameInMessage = true;
             } else {
@@ -471,7 +492,7 @@ public class DialogCell extends BaseCell {
                 hasNameInMessage = false;
             }
         } else {
-            if (!useForceThreeLines && !SharedConfig.useThreeLinesLayout || currentDialogFolderId != 0) {
+            if (!useForceThreeLines && !SharedConfig.useThreeLinesLayout || currentDialogFolderId != 0 || isCategory) {
                 messageFormat = "%2$s: %1$s";
                 hasNameInMessage = true;
             } else {
@@ -608,7 +629,7 @@ public class DialogCell extends BaseCell {
             }
 
             if (encryptedChat != null) {
-                if (currentDialogFolderId == 0) {
+                if (currentDialogFolderId == 0 && !isCategory) {
                     drawNameLock = true;
                     if (useForceThreeLines || SharedConfig.useThreeLinesLayout) {
                         nameLockTop = AndroidUtilities.dp(12.5f);
@@ -744,8 +765,11 @@ public class DialogCell extends BaseCell {
                         if (mess.length() > 150) {
                             mess = mess.substring(0, 150);
                         }
-                        SpannableStringBuilder stringBuilder = SpannableStringBuilder.valueOf(String.format(messageFormat, mess.replace('\n', ' '), messageNameString));
-                        if (!useForceThreeLines && !SharedConfig.useThreeLinesLayout) {
+                        SpannableStringBuilder stringBuilder;
+                        if (useForceThreeLines || SharedConfig.useThreeLinesLayout) {
+                            stringBuilder = SpannableStringBuilder.valueOf(String.format(messageFormat, mess.replace('\n', ' '), messageNameString));
+                        } else {
+                            stringBuilder = SpannableStringBuilder.valueOf(String.format(messageFormat, mess.replace('\n', ' '), messageNameString));
                             stringBuilder.setSpan(new ForegroundColorSpan(Theme.getColor(Theme.key_chats_draft)), 0, messageNameString.length() + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                         }
                         messageString = Emoji.replaceEmoji(stringBuilder, Theme.dialogs_messagePaint[paintIndex].getFontMetricsInt(), AndroidUtilities.dp(20), false);
@@ -754,7 +778,7 @@ public class DialogCell extends BaseCell {
                     if (clearingDialog) {
                         currentMessagePaint = Theme.dialogs_messagePrintingPaint[paintIndex];
                         messageString = LocaleController.getString("HistoryCleared", R.string.HistoryCleared);
-                    } else if (message == null) {
+                    } else if (message == null && !isCategory) {
                         if (encryptedChat != null) {
                             currentMessagePaint = Theme.dialogs_messagePrintingPaint[paintIndex];
                             if (encryptedChat instanceof TLRPC.TL_encryptedChatRequested) {
@@ -776,18 +800,20 @@ public class DialogCell extends BaseCell {
                     } else {
                         TLRPC.User fromUser = null;
                         TLRPC.Chat fromChat = null;
-                        if (message.isFromUser()) {
-                            fromUser = MessagesController.getInstance(currentAccount).getUser(message.messageOwner.from_id);
-                        } else {
-                            fromChat = MessagesController.getInstance(currentAccount).getChat(message.messageOwner.to_id.channel_id);
+                        if (message != null) {
+                            if (message.isFromUser()) {
+                                fromUser = MessagesController.getInstance(currentAccount).getUser(message.messageOwner.from_id);
+                            } else {
+                                fromChat = MessagesController.getInstance(currentAccount).getChat(message.messageOwner.to_id.channel_id);
+                            }
                         }
-                        if (dialogsType == 3 && UserObject.isUserSelf(user)) {
+                        if (dialogsType == 3 && !isCategory && UserObject.isUserSelf(user)) {
                             messageString = LocaleController.getString("SavedMessagesInfo", R.string.SavedMessagesInfo);
                             showChecks = false;
                             drawTime = false;
-                        } else if (!useForceThreeLines && !SharedConfig.useThreeLinesLayout && currentDialogFolderId != 0) {
+                        } else if (!useForceThreeLines && !SharedConfig.useThreeLinesLayout && (currentDialogFolderId != 0 || isCategory)) {
                             checkMessage = false;
-                            messageString = formatArchivedDialogNames();
+                            messageString = formatFolderedDialogNames();
                         } else if (message.messageOwner instanceof TLRPC.TL_messageService) {
                             if (ChatObject.isChannel(chat) && (message.messageOwner.action instanceof TLRPC.TL_messageActionHistoryClear ||
                                     message.messageOwner.action instanceof TLRPC.TL_messageActionChannelMigrateFrom)) {
@@ -921,8 +947,8 @@ public class DialogCell extends BaseCell {
                                 }
                             }
                         }
-                        if (currentDialogFolderId != 0) {
-                            messageNameString = formatArchivedDialogNames();
+                        if (currentDialogFolderId != 0 || isCategory) {
+                            messageNameString = formatFolderedDialogNames();
                         }
                     }
                 }
@@ -936,7 +962,7 @@ public class DialogCell extends BaseCell {
                 timeString = LocaleController.stringForMessageListDate(message.messageOwner.date);
             }
 
-            if (message == null) {
+            if (message == null && !isCategory) {
                 drawCheck1 = false;
                 drawCheck2 = false;
                 drawClock = false;
@@ -944,7 +970,7 @@ public class DialogCell extends BaseCell {
                 drawMention = false;
                 drawError = false;
             } else {
-                if (currentDialogFolderId != 0) {
+                if (currentDialogFolderId != 0 || isCategory) {
                     if (unreadCount + mentionCount > 0) {
                         if (unreadCount > mentionCount) {
                             drawCount = true;
@@ -980,7 +1006,7 @@ public class DialogCell extends BaseCell {
                     }
                 }
 
-                if (message.isOut() && draftMessage == null && showChecks && !(message.messageOwner.action instanceof TLRPC.TL_messageActionHistoryClear)) {
+                if (message != null && message.isOut() && draftMessage == null && showChecks && !(message.messageOwner.action instanceof TLRPC.TL_messageActionHistoryClear)) {
                     if (message.isSending()) {
                         drawCheck1 = false;
                         drawCheck2 = false;
@@ -1012,8 +1038,10 @@ public class DialogCell extends BaseCell {
                 timeString = LocaleController.getString("UseProxySponsor", R.string.UseProxySponsor);
             }
 
-            if (currentDialogFolderId != 0) {
+            if (currentDialogFolderId != 0 && !isCategory) {
                 nameString = LocaleController.getString("ArchivedChats", R.string.ArchivedChats);
+            } else if (isCategory) {
+                nameString = categoryName;
             } else {
                 if (chat != null) {
                     nameString = chat.title;
@@ -1268,7 +1296,7 @@ public class DialogCell extends BaseCell {
 
         try {
             CharSequence messageStringFinal;
-            if ((useForceThreeLines || SharedConfig.useThreeLinesLayout) && currentDialogFolderId != 0 && currentDialogFolderDialogsCount > 1) {
+            if ((useForceThreeLines || SharedConfig.useThreeLinesLayout) && (currentDialogFolderId != 0 || isCategory) && currentDialogFolderDialogsCount > 1) {
                 messageStringFinal = messageNameString;
                 messageNameString = null;
                 currentMessagePaint = Theme.dialogs_messagePaint[paintIndex];
@@ -1384,7 +1412,7 @@ public class DialogCell extends BaseCell {
             TLRPC.Dialog nextDialog = index + 1 < dialogsArray.size() ? dialogsArray.get(index + 1) : null;
             TLRPC.DraftMessage newDraftMessage = MediaDataController.getInstance(currentAccount).getDraft(currentDialogId);
             MessageObject newMessageObject;
-            if (currentDialogFolderId != 0) {
+            if (currentDialogFolderId != 0 || isCategory) {
                 newMessageObject = findFolderTopMessage();
             } else {
                 newMessageObject = MessagesController.getInstance(currentAccount).dialogMessage.get(dialog.id);
@@ -1402,17 +1430,14 @@ public class DialogCell extends BaseCell {
                 if (dialog instanceof TLRPC.TL_dialogFolder) {
                     TLRPC.TL_dialogFolder dialogFolder = (TLRPC.TL_dialogFolder) dialog;
                     currentDialogFolderId = dialogFolder.folder.id;
+                } else if (dialog instanceof Category) {
+                    Category category = (Category) dialog;
+                    currentDialogFolderId = (int) category.getId();
                 } else {
                     currentDialogFolderId = 0;
                 }
-                if (dialogsType == 7 || dialogsType == 8) {
-                    MessagesController.DialogFilter filter = MessagesController.getInstance(currentAccount).selectedDialogFilter[dialogsType == 8 ? 1 : 0];
-                    fullSeparator = dialog instanceof TLRPC.TL_dialog && nextDialog != null && filter != null && filter.pinnedDialogs.indexOfKey(dialog.id) >= 0 && filter.pinnedDialogs.indexOfKey(nextDialog.id) < 0;
-                    fullSeparator2 = false;
-                } else {
-                    fullSeparator = dialog instanceof TLRPC.TL_dialog && dialog.pinned && nextDialog != null && !nextDialog.pinned;
-                    fullSeparator2 = dialog instanceof TLRPC.TL_dialogFolder && nextDialog != null && !nextDialog.pinned;
-                }
+                fullSeparator = dialog instanceof TLRPC.TL_dialog && dialog.pinned && nextDialog != null && !nextDialog.pinned;
+                fullSeparator2 = dialog instanceof TLRPC.TL_dialog && nextDialog != null && !nextDialog.pinned;
                 update(0);
                 if (dialogChanged) {
                     reorderIconProgress = drawPin && drawReorder ? 1.0f : 0.0f;
@@ -1459,7 +1484,7 @@ public class DialogCell extends BaseCell {
     }
 
     public boolean isFolderCell() {
-        return currentDialogFolderId != 0;
+        return currentDialogFolderId != 0 && !isCategory;
     }
 
     public void update(int mask) {
@@ -1473,39 +1498,44 @@ public class DialogCell extends BaseCell {
             avatarImage.setImage(null, "50_50", avatarDrawable, null, 0);
         } else {
             if (isDialogCell) {
-                TLRPC.Dialog dialog = MessagesController.getInstance(currentAccount).dialogs_dict.get(currentDialogId);
-                if (dialog != null) {
-                    if (mask == 0) {
-                        clearingDialog = MessagesController.getInstance(currentAccount).isClearingDialog(dialog.id);
-                        message = MessagesController.getInstance(currentAccount).dialogMessage.get(dialog.id);
-                        lastUnreadState = message != null && message.isUnread();
-                        if (dialog instanceof TLRPC.TL_dialogFolder) {
-                            unreadCount = MessagesStorage.getInstance(currentAccount).getArchiveUnreadCount();
-                            mentionCount = 0;
-                        } else {
-                            unreadCount = dialog.unread_count;
-                            mentionCount = dialog.unread_mentions_count;
-                        }
-                        markUnread = dialog.unread_mark;
-                        currentEditDate = message != null ? message.messageOwner.edit_date : 0;
-                        lastMessageDate = dialog.last_message_date;
-                        if (dialogsType == 7 || dialogsType == 8) {
-                            MessagesController.DialogFilter filter = MessagesController.getInstance(currentAccount).selectedDialogFilter[dialogsType == 8 ? 1 : 0];
-                            drawPin = filter != null && filter.pinnedDialogs.indexOfKey(dialog.id) >= 0;
-                        } else {
-                            drawPin = currentDialogFolderId == 0 && dialog.pinned;
-                        }
-                        if (message != null) {
-                            lastSendState = message.messageOwner.send_state;
-                        }
+                if (isCategory) {
+                    Category category = MessagesController.getInstance(currentAccount).categories_dict.get(categoryId);
+                    if (category != null) {
+                        unreadCount = category.getUnread();
+                    } else {
+                        unreadCount = 0;
                     }
-                } else {
-                    unreadCount = 0;
                     mentionCount = 0;
                     currentEditDate = 0;
                     lastMessageDate = 0;
                     clearingDialog = false;
+                    drawPin = false;
+                } else {
+                    TLRPC.Dialog dialog = MessagesController.getInstance(currentAccount).dialogs_dict.get(currentDialogId);
+                    if (dialog != null) {
+                        if (mask == 0) {
+                            clearingDialog = MessagesController.getInstance(currentAccount).isClearingDialog(dialog.id);
+                            message = MessagesController.getInstance(currentAccount).dialogMessage.get(dialog.id);
+                            lastUnreadState = message != null && message.isUnread();
+                            unreadCount = dialog.unread_count;
+                            markUnread = dialog.unread_mark;
+                            mentionCount = dialog.unread_mentions_count;
+                            currentEditDate = message != null ? message.messageOwner.edit_date : 0;
+                            lastMessageDate = dialog.last_message_date;
+                            drawPin = currentDialogFolderId == 0 && !isCategory && dialog.pinned;
+                            if (message != null) {
+                                lastSendState = message.messageOwner.send_state;
+                            }
+                        }
+                    } else {
+                        unreadCount = 0;
+                        mentionCount = 0;
+                        currentEditDate = 0;
+                        lastMessageDate = 0;
+                        clearingDialog = false;
+                    }
                 }
+
             } else {
                 drawPin = false;
             }
@@ -1556,21 +1586,9 @@ public class DialogCell extends BaseCell {
                     }
                     if (isDialogCell) {
                         TLRPC.Dialog dialog = MessagesController.getInstance(currentAccount).dialogs_dict.get(currentDialogId);
-                        int newCount;
-                        int newMentionCount;
-                        if (dialog instanceof TLRPC.TL_dialogFolder) {
-                            newCount = MessagesStorage.getInstance(currentAccount).getArchiveUnreadCount();
-                            newMentionCount = 0;
-                        } else if (dialog != null) {
-                            newCount = dialog.unread_count;
-                            newMentionCount = dialog.unread_mentions_count;
-                        } else {
-                            newCount = 0;
-                            newMentionCount = 0;
-                        }
-                        if (dialog != null && (unreadCount != newCount || markUnread != dialog.unread_mark || mentionCount != newMentionCount)) {
-                            unreadCount = newCount;
-                            mentionCount = newMentionCount;
+                        if (dialog != null && (unreadCount != dialog.unread_count || markUnread != dialog.unread_mark || mentionCount != dialog.unread_mentions_count)) {
+                            unreadCount = dialog.unread_count;
+                            mentionCount = dialog.unread_mentions_count;
                             markUnread = dialog.unread_mark;
                             continueUpdate = true;
                         }
@@ -1594,7 +1612,7 @@ public class DialogCell extends BaseCell {
             encryptedChat = null;
 
             long dialogId;
-            if (currentDialogFolderId != 0) {
+            if (currentDialogFolderId != 0 || isCategory) {
                 dialogMuted = false;
                 message = findFolderTopMessage();
                 if (message != null) {
@@ -1633,10 +1651,19 @@ public class DialogCell extends BaseCell {
                 }
             }
 
-            if (currentDialogFolderId != 0) {
+            if (currentDialogFolderId != 0 && !isCategory) {
                 Theme.dialogs_archiveAvatarDrawable.setCallback(this);
                 avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_ARCHIVED);
                 avatarImage.setImage(null, null, avatarDrawable, null, user, 0);
+            } else if (isCategory) {
+                String avatarString = categoryAvatar;
+                avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_CATEGORY);
+                avatarDrawable.buildAvatarLetter(categoryName, null, null);
+                if (avatarString.isEmpty()) {
+                    avatarImage.setImage(null, "50_50", avatarDrawable, null, 0);
+                } else {
+                    avatarImage.setImage(avatarString, "50_50", avatarDrawable, null, 0);
+                }
             } else {
                 if (user != null) {
                     avatarDrawable.setInfo(user);
@@ -1696,13 +1723,13 @@ public class DialogCell extends BaseCell {
     @SuppressLint("DrawAllocation")
     @Override
     protected void onDraw(Canvas canvas) {
-        if (currentDialogId == 0 && customDialog == null) {
+        if (currentDialogId == 0 && customDialog == null && !isCategory) {
             return;
         }
 
         boolean needInvalidate = false;
 
-        if (currentDialogFolderId != 0 && archivedChatsDrawable != null && archivedChatsDrawable.outProgress == 0.0f && translationX == 0.0f) {
+        if (currentDialogFolderId != 0 && !isCategory && archivedChatsDrawable != null && archivedChatsDrawable.outProgress == 0.0f && translationX == 0.0f) {
             archivedChatsDrawable.draw(canvas);
             return;
         }
@@ -1724,7 +1751,7 @@ public class DialogCell extends BaseCell {
             String archive;
             int backgroundColor;
             int revealBackgroundColor;
-            if (currentDialogFolderId != 0) {
+            if (currentDialogFolderId != 0 || isCategory) {
                 if (archiveHidden) {
                     backgroundColor = Theme.getColor(Theme.key_chats_archivePinBackground);
                     revealBackgroundColor = Theme.getColor(Theme.key_chats_archiveBackground);
@@ -1817,10 +1844,10 @@ public class DialogCell extends BaseCell {
         if (isSelected) {
             canvas.drawRect(0, 0, getMeasuredWidth(), getMeasuredHeight(), Theme.dialogs_tabletSeletedPaint);
         }
-        if (currentDialogFolderId != 0 && (!SharedConfig.archiveHidden || archiveBackgroundProgress != 0)) {
+        if (currentDialogFolderId != 0 && !isCategory && (!SharedConfig.archiveHidden || archiveBackgroundProgress != 0)) {
             Theme.dialogs_pinnedPaint.setColor(AndroidUtilities.getOffsetColor(0, Theme.getColor(Theme.key_chats_pinnedOverlay), archiveBackgroundProgress, 1.0f));
             canvas.drawRect(0, 0, getMeasuredWidth(), getMeasuredHeight(), Theme.dialogs_pinnedPaint);
-        } else if (drawPin || drawPinBackground) {
+        } else if (drawPin || drawPinBackground || isCategory && dialogsType != 10) {
             Theme.dialogs_pinnedPaint.setColor(Theme.getColor(Theme.key_chats_pinnedOverlay));
             canvas.drawRect(0, 0, getMeasuredWidth(), getMeasuredHeight(), Theme.dialogs_pinnedPaint);
         }
@@ -1832,10 +1859,10 @@ public class DialogCell extends BaseCell {
             rect.set(getMeasuredWidth() - AndroidUtilities.dp(64), 0, getMeasuredWidth(), getMeasuredHeight());
             canvas.drawRoundRect(rect, AndroidUtilities.dp(8) * cornerProgress, AndroidUtilities.dp(8) * cornerProgress, Theme.dialogs_pinnedPaint);
 
-            if (currentDialogFolderId != 0 && (!SharedConfig.archiveHidden || archiveBackgroundProgress != 0)) {
+            if (currentDialogFolderId != 0 && !isCategory && (!SharedConfig.archiveHidden || archiveBackgroundProgress != 0)) {
                 Theme.dialogs_pinnedPaint.setColor(AndroidUtilities.getOffsetColor(0, Theme.getColor(Theme.key_chats_pinnedOverlay), archiveBackgroundProgress, 1.0f));
                 canvas.drawRoundRect(rect, AndroidUtilities.dp(8) * cornerProgress, AndroidUtilities.dp(8) * cornerProgress, Theme.dialogs_pinnedPaint);
-            } else if (drawPin || drawPinBackground) {
+            } else if (drawPin || drawPinBackground || isCategory) {
                 Theme.dialogs_pinnedPaint.setColor(Theme.getColor(Theme.key_chats_pinnedOverlay));
                 canvas.drawRoundRect(rect, AndroidUtilities.dp(8) * cornerProgress, AndroidUtilities.dp(8) * cornerProgress, Theme.dialogs_pinnedPaint);
             }
@@ -1873,7 +1900,7 @@ public class DialogCell extends BaseCell {
         }
 
         if (nameLayout != null) {
-            if (currentDialogFolderId != 0) {
+            if (currentDialogFolderId != 0 || isCategory) {
                 Theme.dialogs_namePaint[paintIndex].setColor(Theme.dialogs_namePaint[paintIndex].linkColor = Theme.getColor(Theme.key_chats_nameArchived));
             } else if (encryptedChat != null || customDialog != null && customDialog.type == 2) {
                 Theme.dialogs_namePaint[paintIndex].setColor(Theme.dialogs_namePaint[paintIndex].linkColor = Theme.getColor(Theme.key_chats_secretName));
@@ -1886,7 +1913,7 @@ public class DialogCell extends BaseCell {
             canvas.restore();
         }
 
-        if (timeLayout != null && currentDialogFolderId == 0) {
+        if (timeLayout != null && currentDialogFolderId == 0 && !isCategory) {
             canvas.save();
             canvas.translate(timeLeft, timeTop);
             timeLayout.draw(canvas);
@@ -1894,7 +1921,7 @@ public class DialogCell extends BaseCell {
         }
 
         if (messageNameLayout != null) {
-            if (currentDialogFolderId != 0) {
+            if (currentDialogFolderId != 0 || isCategory) {
                 Theme.dialogs_messageNamePaint.setColor(Theme.dialogs_messageNamePaint.linkColor = Theme.getColor(Theme.key_chats_nameMessageArchived_threeLines));
             } else if (draftMessage != null) {
                 Theme.dialogs_messageNamePaint.setColor(Theme.dialogs_messageNamePaint.linkColor = Theme.getColor(Theme.key_chats_draft));
@@ -1912,7 +1939,7 @@ public class DialogCell extends BaseCell {
         }
 
         if (messageLayout != null) {
-            if (currentDialogFolderId != 0) {
+            if (currentDialogFolderId != 0 || isCategory) {
                 if (chat != null) {
                     Theme.dialogs_messagePaint[paintIndex].setColor(Theme.dialogs_messagePaint[paintIndex].linkColor = Theme.getColor(Theme.key_chats_nameMessageArchived));
                 } else {
@@ -1931,7 +1958,7 @@ public class DialogCell extends BaseCell {
             canvas.restore();
         }
 
-        if (currentDialogFolderId == 0) {
+        if (currentDialogFolderId == 0 && !isCategory) {
             if (drawClock) {
                 setDrawableBounds(Theme.dialogs_clockDrawable, checkDrawLeft, checkDrawTop);
                 Theme.dialogs_clockDrawable.draw(canvas);
@@ -2067,7 +2094,7 @@ public class DialogCell extends BaseCell {
         if (translationX != 0) {
             canvas.restore();
         }
-        if (currentDialogFolderId != 0 && translationX == 0 && archivedChatsDrawable != null) {
+        if (currentDialogFolderId != 0 && !isCategory && translationX == 0 && archivedChatsDrawable != null) {
             archivedChatsDrawable.draw(canvas);
         }
 
@@ -2235,8 +2262,11 @@ public class DialogCell extends BaseCell {
     public void onPopulateAccessibilityEvent(AccessibilityEvent event) {
         super.onPopulateAccessibilityEvent(event);
         StringBuilder sb = new StringBuilder();
-        if (currentDialogFolderId == 1) {
+        if (currentDialogFolderId == 1 && !isCategory) {
             sb.append(LocaleController.getString("ArchivedChats", R.string.ArchivedChats));
+            sb.append(". ");
+        } else if (isCategory) {
+            sb.append(categoryName);
             sb.append(". ");
         } else {
             if (encryptedChat != null) {
@@ -2277,7 +2307,7 @@ public class DialogCell extends BaseCell {
         if (lastMessageDate == 0 && message != null) {
             lastDate = message.messageOwner.date;
         }
-        String date = LocaleController.formatDateAudio(lastDate, true);
+        String date = LocaleController.formatDateAudio(lastDate);
         if (message.isOut()) {
             sb.append(LocaleController.formatString("AccDescrSentDate", R.string.AccDescrSentDate, date));
         } else {

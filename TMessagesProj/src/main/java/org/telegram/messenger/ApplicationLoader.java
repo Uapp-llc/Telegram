@@ -26,6 +26,8 @@ import android.os.PowerManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
+import androidx.multidex.MultiDexApplication;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -36,7 +38,7 @@ import org.telegram.ui.Components.ForegroundDetector;
 
 import java.io.File;
 
-public class ApplicationLoader extends Application {
+public class ApplicationLoader extends MultiDexApplication {
 
     @SuppressLint("StaticFieldLeak")
     public static volatile Context applicationContext;
