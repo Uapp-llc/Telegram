@@ -3890,7 +3890,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                             SharedPreferences preferences = MessagesController.getGlobalMainSettings();
                             if (!preferences.getBoolean("secretbot", false)) {
                                 AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-                                builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                                builder.setTitle(getParentActivity().getString(R.string.AppName));
                                 builder.setMessage(LocaleController.getString("SecretChatContextBotAlert", R.string.SecretChatContextBotAlert));
                                 builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
                                 showDialog(builder.create());
@@ -4097,7 +4097,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                     return false;
                 } else {
                     AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-                    builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                    builder.setTitle(getParentActivity().getString(R.string.AppName));
                     builder.setMessage(LocaleController.getString("ClearSearch", R.string.ClearSearch));
                     builder.setPositiveButton(LocaleController.getString("ClearButton", R.string.ClearButton).toUpperCase(), (dialogInterface, i) -> mentionsAdapter.clearRecentHashtags());
                     builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
@@ -4965,7 +4965,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                     AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
                     builder.setMessage(LocaleController.getString("AreYouSureUnblockContact", R.string.AreYouSureUnblockContact));
                     builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), (dialogInterface, i) -> getMessagesController().unblockUser(currentUser.id));
-                    builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                    builder.setTitle(getParentActivity().getString(R.string.AppName));
                     builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
                     showDialog(builder.create());
                 }
@@ -6959,7 +6959,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
             if (currentEncryptedChat != null && messagesController.secretWebpagePreview == 2) {
                 AndroidUtilities.runOnUIThread(() -> {
                     AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-                    builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                    builder.setTitle(getParentActivity().getString(R.string.AppName));
                     builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), (dialog, which) -> {
                         messagesController.secretWebpagePreview = 1;
                         MessagesController.getGlobalMainSettings().edit().putInt("secretWebpage2", getMessagesController().secretWebpagePreview).commit();
@@ -7875,12 +7875,16 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 
     private void toggleMute(boolean instant) {
         boolean muted = getMessagesController().isDialogMuted(dialog_id);
+        String categoryKeyPrefix = "";
+        if(getMessagesController().isDialogInCategory(dialog_id)){
+            categoryKeyPrefix = "category_";
+        }
         if (!muted) {
             if (instant) {
                 long flags;
                 SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
-                editor.putInt("notify2_" + dialog_id, 2);
+                editor.putInt(categoryKeyPrefix + "notify2_" + dialog_id, 2);
                 flags = 1;
                 getMessagesStorage().setDialogFlags(dialog_id, flags);
                 editor.commit();
@@ -7897,7 +7901,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         } else {
             SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
             SharedPreferences.Editor editor = preferences.edit();
-            editor.putInt("notify2_" + dialog_id, 0);
+            editor.putInt(categoryKeyPrefix + "notify2_" + dialog_id, 0);
             getMessagesStorage().setDialogFlags(dialog_id, 0);
             editor.commit();
             TLRPC.Dialog dialog = getMessagesController().dialogs_dict.get(dialog_id);
@@ -8353,7 +8357,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
             }
             if (grantResults != null && grantResults.length != 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-                builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                builder.setTitle(getParentActivity().getString(R.string.AppName));
                 builder.setMessage(LocaleController.getString("PermissionNoAudioVideo", R.string.PermissionNoAudioVideo));
                 builder.setNegativeButton(LocaleController.getString("PermissionOpenSettings", R.string.PermissionOpenSettings), (dialog, which) -> {
                     try {
@@ -9976,7 +9980,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                             obj.messageOwner.action.encryptedAction instanceof TLRPC.TL_decryptedMessageActionSetMessageTTL && getParentActivity() != null) {
                         if (AndroidUtilities.getPeerLayerVersion(currentEncryptedChat.layer) < 17 && currentEncryptedChat.ttl > 0 && currentEncryptedChat.ttl <= 60) {
                             AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-                            builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                            builder.setTitle(getParentActivity().getString(R.string.AppName));
                             builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
                             builder.setMessage(LocaleController.formatString("CompatibilityChat", R.string.CompatibilityChat, currentUser.first_name, currentUser.first_name));
                             showDialog(builder.create());
@@ -11027,7 +11031,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                     return;
                 }
                 AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-                builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                builder.setTitle(getParentActivity().getString(R.string.AppName));
                 if (reason == 0) {
                     builder.setMessage(LocaleController.getString("ChannelCantOpenPrivate", R.string.ChannelCantOpenPrivate));
                 } else if (reason == 1) {
@@ -12948,7 +12952,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 if (preferences.getLong("proxychannel", 0) != dialog_id) {
                     preferences.edit().putLong("proxychannel", dialog_id).commit();
                     AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-                    builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                    builder.setTitle(getParentActivity().getString(R.string.AppName));
                     builder.setMessage(LocaleController.getString("UseProxySponsorInfo", R.string.UseProxySponsorInfo));
                     builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
                     showDialog(builder.create());
@@ -14238,7 +14242,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                         return;
                     }
                     AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-                    builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                    builder.setTitle(getParentActivity().getString(R.string.AppName));
                     builder.setMessage(LocaleController.getString("EditMessageError", R.string.EditMessageError));
                     builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
                     showDialog(builder.create());
@@ -14427,7 +14431,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                                 return;
                             }
                             AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-                            builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                            builder.setTitle(getParentActivity().getString(R.string.AppName));
                             builder.setMessage(LocaleController.getString("IncorrectTheme", R.string.IncorrectTheme));
                             builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
                             showDialog(builder.create());
@@ -14443,7 +14447,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                                 return;
                             }
                             AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-                            builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                            builder.setTitle(getParentActivity().getString(R.string.AppName));
                             builder.setMessage(LocaleController.getString("IncorrectLocalization", R.string.IncorrectLocalization));
                             builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
                             showDialog(builder.create());
@@ -14865,15 +14869,32 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                         return;
                     }
                 }
+
                 ChatActivity chatActivity = new ChatActivity(args);
-                if (presentFragment(chatActivity, true)) {
-                    chatActivity.showFieldPanelForForward(true, fmessages);
-                    if (!AndroidUtilities.isTablet()) {
-                        removeSelfFromStack();
+                if (getMessagesController().lockedDialogs_dict.get(did) == null) {
+                    if (presentFragment(chatActivity, true)) {
+                        chatActivity.showFieldPanelForForward(true, fmessages);
+                        if (!AndroidUtilities.isTablet()) {
+                            removeSelfFromStack();
+                        }
+                    } else {
+                        fragment.finishFragment();
                     }
                 } else {
-                    fragment.finishFragment();
+                    DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, did);
+                    privacySettingsActivity.setDelegate(id -> {
+                        if (presentFragment(chatActivity, true)) {
+                            chatActivity.showFieldPanelForForward(true, fmessages);
+                            if (!AndroidUtilities.isTablet()) {
+                                removeSelfFromStack();
+                            }
+                        } else {
+                            fragment.finishFragment();
+                        }
+                    });
+                    presentFragment(privacySettingsActivity, true);
                 }
+
             } else {
                 fragment.finishFragment();
                 moveScrollToLastMessage();
@@ -15065,7 +15086,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
             return;
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-        builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+        builder.setTitle(getParentActivity().getString(R.string.AppName));
         builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
         if (message.type == 3) {
             builder.setMessage(LocaleController.getString("NoPlayerInstalled", R.string.NoPlayerInstalled));
@@ -15175,7 +15196,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         TLRPC.User user = getMessagesController().getUser(uid);
         if (ask) {
             AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-            builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+            builder.setTitle(getParentActivity().getString(R.string.AppName));
             String name;
             if (user != null) {
                 name = ContactsController.formatName(user.first_name, user.last_name);
@@ -15573,7 +15594,16 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                             args.putInt("user_id", user.id);
                             ProfileActivity fragment = new ProfileActivity(args);
                             fragment.setPlayProfileAnimation(currentUser != null && currentUser.id == user.id ? 1 : 0);
-                            presentFragment(fragment);
+                            if(getMessagesController().lockedDialogs_dict.get(user.id) == null){
+                                presentFragment(fragment);
+                            } else {
+                                DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, user.id);
+                                privacySettingsActivity.setDelegate(id -> {
+                                    privacySettingsActivity.removeSelfFromStack();
+                                    presentFragment(fragment);
+                                });
+                                presentFragment(privacySettingsActivity);
+                            }
                         }
                     }
 
@@ -15821,19 +15851,35 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                             if (currentChat != null && !TextUtils.isEmpty(currentChat.username) && username.equals(currentChat.username.toLowerCase()) ||
                                     currentUser != null && !TextUtils.isEmpty(currentUser.username) && username.equals(currentUser.username.toLowerCase())) {
                                 Bundle args = new Bundle();
+                                int chatId = 0;
+                                int userId = 0;
+                                int dialogId = 0;
                                 if (currentChat != null) {
-                                    args.putInt("chat_id", currentChat.id);
+                                    chatId = currentChat.id;
+                                    args.putInt("chat_id", chatId);
                                 } else if (currentUser != null) {
-                                    args.putInt("user_id", currentUser.id);
+                                    userId = currentUser.id;
+                                    args.putInt("user_id", userId);
                                     if (currentEncryptedChat != null) {
+                                        dialogId = (int)dialog_id;
                                         args.putLong("dialog_id", dialog_id);
                                     }
                                 }
+                                int finalId = dialogId != 0 ? dialogId : userId != 0 ? userId : chatId;
                                 ProfileActivity fragment = new ProfileActivity(args);
                                 fragment.setPlayProfileAnimation(1);
                                 fragment.setChatInfo(chatInfo);
                                 fragment.setUserInfo(userInfo);
-                                presentFragment(fragment);
+                                if(getMessagesController().lockedDialogs_dict.get(finalId) == null){
+                                    presentFragment(fragment);
+                                } else {
+                                    DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, finalId);
+                                    privacySettingsActivity.setDelegate(id -> {
+                                        privacySettingsActivity.removeSelfFromStack();
+                                        presentFragment(fragment);
+                                    });
+                                    presentFragment(privacySettingsActivity);
+                                }
                             } else {
                                 MessagesController.getInstance(currentAccount).openByUserName(username, ChatActivity.this, 0);
                             }
@@ -16126,6 +16172,9 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 
                     @Override
                     public void needOpenUserProfile(int uid) {
+                        if(getMessagesController().lockedDialogs_dict.get(uid) != null){
+                            return;
+                        }
                         if (uid < 0) {
                             Bundle args = new Bundle();
                             args.putInt("chat_id", -uid);

@@ -176,6 +176,10 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
 
     private static final int PLAY_SERVICES_REQUEST_CHECK_SETTINGS = 140;
 
+    private boolean pushOpened = false;
+    private boolean askDialogPass = false;
+    private int selectedDialogIdToShare = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ApplicationLoader.postInitApplication();
@@ -972,7 +976,7 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
             passcodeSaveIntentIsRestore = restore;
             UserConfig.getInstance(currentAccount).saveConfig(false);
         } else {
-            boolean pushOpened = false;
+            pushOpened = false;
 
             int push_user_id = 0;
             int push_chat_id = 0;
@@ -991,6 +995,7 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
             boolean showDialogsList = false;
             boolean showPlayer = false;
             boolean showLocations = false;
+            boolean askDialogPass = false;
 
             photoPathsArray = null;
             videoPath = null;
@@ -1598,12 +1603,21 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
                         if (chatId != 0) {
                             NotificationCenter.getInstance(intentAccount[0]).postNotificationName(NotificationCenter.closeChats);
                             push_chat_id = chatId;
+                            if (MessagesController.getInstance(currentAccount).isDialogLocked(push_chat_id)) {
+                                askDialogPass = true;
+                            }
                         } else if (userId != 0) {
                             NotificationCenter.getInstance(intentAccount[0]).postNotificationName(NotificationCenter.closeChats);
                             push_user_id = userId;
+                            if (MessagesController.getInstance(currentAccount).isDialogLocked(push_user_id)) {
+                                askDialogPass = true;
+                            }
                         } else if (encId != 0) {
                             NotificationCenter.getInstance(intentAccount[0]).postNotificationName(NotificationCenter.closeChats);
                             push_enc_id = encId;
+                            if (MessagesController.getInstance(currentAccount).isDialogLocked(push_enc_id)) {
+                                askDialogPass = true;
+                            }
                         } else {
                             showDialogsList = true;
                         }
@@ -1619,14 +1633,25 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
                 if (push_user_id != 0) {
                     Bundle args = new Bundle();
                     args.putInt("user_id", push_user_id);
-                    if (push_msg_id != 0)
-                        args.putInt("message_id", push_msg_id);
+                    if (push_msg_id != 0) args.putInt("message_id", push_msg_id);
                     if (mainFragmentsStack.isEmpty() || MessagesController.getInstance(intentAccount[0]).checkCanOpenChat(args, mainFragmentsStack.get(mainFragmentsStack.size() - 1))) {
                         ChatActivity fragment = new ChatActivity(args);
-                        if (actionBarLayout.presentFragment(fragment, false, true, true, false)) {
-                            pushOpened = true;
+                        if (!askDialogPass) {
+                            if (actionBarLayout.presentFragment(fragment, false, true, true, false)) {
+                                pushOpened = true;
+                            }
+                        } else {
+                            DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, push_user_id);
+                            privacySettingsActivity.setDelegate(id -> {
+                                privacySettingsActivity.removeSelfFromStack();
+                                if (actionBarLayout.presentFragment(fragment, false, true, true, false)) {
+                                    pushOpened = true;
+                                }
+                            });
+                            presentFragment(privacySettingsActivity);
                         }
                     }
+
                 } else if (push_chat_id != 0) {
                     Bundle args = new Bundle();
                     args.putInt("chat_id", push_chat_id);
@@ -1634,16 +1659,38 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
                         args.putInt("message_id", push_msg_id);
                     if (mainFragmentsStack.isEmpty() || MessagesController.getInstance(intentAccount[0]).checkCanOpenChat(args, mainFragmentsStack.get(mainFragmentsStack.size() - 1))) {
                         ChatActivity fragment = new ChatActivity(args);
-                        if (actionBarLayout.presentFragment(fragment, false, true, true, false)) {
-                            pushOpened = true;
+                        if (!askDialogPass) {
+                            if (actionBarLayout.presentFragment(fragment, false, true, true, false)) {
+                                pushOpened = true;
+                            }
+                        } else {
+                            DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, push_chat_id);
+                            privacySettingsActivity.setDelegate(id -> {
+                                privacySettingsActivity.removeSelfFromStack();
+                                if (actionBarLayout.presentFragment(fragment, false, true, true, false)) {
+                                    pushOpened = true;
+                                }
+                            });
+                            presentFragment(privacySettingsActivity);
                         }
                     }
                 } else if (push_enc_id != 0) {
                     Bundle args = new Bundle();
                     args.putInt("enc_id", push_enc_id);
                     ChatActivity fragment = new ChatActivity(args);
-                    if (actionBarLayout.presentFragment(fragment, false, true, true, false)) {
-                        pushOpened = true;
+                    if (!askDialogPass) {
+                        if (actionBarLayout.presentFragment(fragment, false, true, true, false)) {
+                            pushOpened = true;
+                        }
+                    } else {
+                        DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, push_enc_id);
+                        privacySettingsActivity.setDelegate(id -> {
+                            privacySettingsActivity.removeSelfFromStack();
+                            if (actionBarLayout.presentFragment(fragment, false, true, true, false)) {
+                                pushOpened = true;
+                            }
+                        });
+                        presentFragment(privacySettingsActivity);
                     }
                 } else if (showDialogsList) {
                     if (!AndroidUtilities.isTablet()) {
@@ -1836,7 +1883,7 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
                 NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.didReceiveSmsCode, code);
             } else {
                 AlertDialog.Builder builder = new AlertDialog.Builder(LaunchActivity.this);
-                builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                builder.setTitle(getString(R.string.AppName));
                 builder.setMessage(AndroidUtilities.replaceTags(LocaleController.formatString("OtherLoginCode", R.string.OtherLoginCode, code)));
                 builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
                 showAlertDialog(builder);
@@ -1961,6 +2008,7 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
                                 dialog_id = res.users.get(0).id;
                                 chat = null;
                             }
+                            boolean askPassword = MessagesController.getInstance(currentAccount).isDialogLocked(dialog_id);
                             if (botUser != null && res.users.size() > 0 && res.users.get(0).bot) {
                                 args.putString("botUser", botUser);
                                 isBot = true;
@@ -1981,7 +2029,16 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
                                         }
                                         if (!LaunchActivity.this.isFinishing()) {
                                             ChatActivity fragment = new ChatActivity(args);
-                                            actionBarLayout.presentFragment(fragment);
+                                            if (!askPassword) {
+                                                actionBarLayout.presentFragment(fragment);
+                                            } else {
+                                                DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, dialog_id);
+                                                privacySettingsActivity.setDelegate(id -> {
+                                                    privacySettingsActivity.removeSelfFromStack();
+                                                    actionBarLayout.presentFragment(fragment);
+                                                });
+                                                presentFragment(privacySettingsActivity, true, false);
+                                            }
                                         }
                                     });
                                     hideProgressDialog = false;
@@ -2045,7 +2102,7 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
                             }
                         } else {
                             AlertDialog.Builder builder = new AlertDialog.Builder(LaunchActivity.this);
-                            builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                            builder.setTitle(getString(R.string.AppName));
                             if (error.text.startsWith("FLOOD_WAIT")) {
                                 builder.setMessage(LocaleController.getString("FloodWait", R.string.FloodWait));
                             } else {
@@ -2099,7 +2156,7 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
                                 }
                             } else {
                                 AlertDialog.Builder builder = new AlertDialog.Builder(LaunchActivity.this);
-                                builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                                builder.setTitle(getString(R.string.AppName));
                                 if (error.text.startsWith("FLOOD_WAIT")) {
                                     builder.setMessage(LocaleController.getString("FloodWait", R.string.FloodWait));
                                 } else if (error.text.equals("USERS_TOO_MUCH")) {
@@ -2538,12 +2595,16 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
                 NotificationCenter.getInstance(account).postNotificationName(NotificationCenter.closeChats);
             }
             if (lower_part != 0) {
+                selectedDialogIdToShare = lower_part;
+                askDialogPass = MessagesController.getInstance(currentAccount).isDialogLocked(selectedDialogIdToShare);
                 if (lower_part > 0) {
                     args.putInt("user_id", lower_part);
                 } else if (lower_part < 0) {
                     args.putInt("chat_id", -lower_part);
                 }
             } else {
+                selectedDialogIdToShare = lower_part;
+                askDialogPass = MessagesController.getInstance(currentAccount).isDialogLocked(selectedDialogIdToShare);
                 args.putInt("enc_id", high_id);
             }
             if (!MessagesController.getInstance(account).checkCanOpenChat(args, dialogsFragment)) {
@@ -2558,10 +2619,22 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
             PhonebookShareAlert alert = new PhonebookShareAlert(mainFragmentsStack.get(mainFragmentsStack.size() - 1), null, null, contactsToSendUri, null, null);
             alert.setDelegate((user, notify, scheduleDate) -> {
                 if (fragment != null) {
-                    actionBarLayout.presentFragment(fragment, true, false, true, false);
-                }
-                for (int i = 0; i < dids.size(); i++) {
-                    SendMessagesHelper.getInstance(account).sendMessage(user, dids.get(i), null, null, null, notify, scheduleDate);
+                    if (!askDialogPass) {
+                        actionBarLayout.presentFragment(fragment, true, false, true, false);
+                        for (int i = 0; i < dids.size(); i++) {
+                            SendMessagesHelper.getInstance(account).sendMessage(user, dids.get(i), null, null, null, notify, scheduleDate);
+                        }
+                    } else {
+                        DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, selectedDialogIdToShare);
+                        privacySettingsActivity.setDelegate(id -> {
+                            privacySettingsActivity.removeSelfFromStack();
+                            actionBarLayout.presentFragment(fragment, true, false, true, false);
+                            for (int i = 0; i < dids.size(); i++) {
+                                SendMessagesHelper.getInstance(account).sendMessage(user, dids.get(i), null, null, null, notify, scheduleDate);
+                            }
+                        });
+                        presentFragment(privacySettingsActivity, true, false );
+                    }
                 }
             });
             mainFragmentsStack.get(mainFragmentsStack.size() - 1).showDialog(alert);
@@ -2573,54 +2646,83 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
 
                 AccountInstance accountInstance = AccountInstance.getInstance(UserConfig.selectedAccount);
                 if (fragment != null) {
-                    actionBarLayout.presentFragment(fragment, dialogsFragment != null, dialogsFragment == null, true, false);
-                    if (videoPath != null) {
-                        fragment.openVideoEditor(videoPath, sendingText);
-                        sendingText = null;
-                    }
-                } else {
+                    if (!askDialogPass) {
+                        actionBarLayout.presentFragment(fragment, dialogsFragment != null, dialogsFragment == null, true, false);
+                        if (videoPath != null) {
+                            fragment.openVideoEditor(videoPath, sendingText);
+                            sendingText = null;
+                        }
+                        prepareItemForSending(accountInstance, did, account, message);
+                        if (dialogsFragment != null && fragment == null) {
+                            dialogsFragment.finishFragment();
+                        }
 
-                }
-                if (photoPathsArray != null) {
-                    if (sendingText != null && sendingText.length() <= 1024 && photoPathsArray.size() == 1) {
-                        photoPathsArray.get(0).caption = sendingText;
+                        photoPathsArray = null;
+                        videoPath = null;
                         sendingText = null;
+                        documentsPathsArray = null;
+                        documentsOriginalPathsArray = null;
+                        contactsToSend = null;
+                        contactsToSendUri = null;
+                    } else {
+                        DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, selectedDialogIdToShare);
+                        privacySettingsActivity.setDelegate(id -> {
+                            privacySettingsActivity.removeSelfFromStack();
+                            actionBarLayout.presentFragment(fragment, dialogsFragment != null, dialogsFragment == null, true, false);
+                            if (videoPath != null) {
+                                fragment.openVideoEditor(videoPath, sendingText);
+                                sendingText = null;
+                            }
+                            prepareItemForSending(accountInstance, did, account, message);
+                            if (dialogsFragment != null && fragment == null) {
+                                dialogsFragment.finishFragment();
+                            }
+
+                            photoPathsArray = null;
+                            videoPath = null;
+                            sendingText = null;
+                            documentsPathsArray = null;
+                            documentsOriginalPathsArray = null;
+                            contactsToSend = null;
+                            contactsToSendUri = null;
+                        });
+                        presentFragment(privacySettingsActivity, true, false);
                     }
-                    SendMessagesHelper.prepareSendingMedia(accountInstance, photoPathsArray, did, null, null, false, false, null, true, 0);
-                }
-                if (documentsPathsArray != null || documentsUrisArray != null) {
-                    String caption = null;
-                    if (sendingText != null && sendingText.length() <= 1024 && ((documentsPathsArray != null ? documentsPathsArray.size() : 0) + (documentsUrisArray != null ? documentsUrisArray.size() : 0)) == 1) {
-                        caption = sendingText;
-                        sendingText = null;
-                    }
-                    SendMessagesHelper.prepareSendingDocuments(accountInstance, documentsPathsArray, documentsOriginalPathsArray, documentsUrisArray, caption, documentsMimeType, did, null, null, null, true, 0);
-                }
-                if (sendingText != null) {
-                    SendMessagesHelper.prepareSendingText(accountInstance, sendingText, did, true, 0);
-                }
-                if (contactsToSend != null && !contactsToSend.isEmpty()) {
-                    for (int a = 0; a < contactsToSend.size(); a++) {
-                        TLRPC.User user = contactsToSend.get(a);
-                        SendMessagesHelper.getInstance(account).sendMessage(user, did, null, null, null, true, 0);
-                    }
-                }
-                if (!TextUtils.isEmpty(message)) {
-                    SendMessagesHelper.prepareSendingText(accountInstance, message.toString(), did, true, 0);
+                } else{
+                    prepareItemForSending(accountInstance, did, account, message);
                 }
             }
         }
-        if (dialogsFragment != null && fragment == null) {
-            dialogsFragment.finishFragment();
-        }
+    }
 
-        photoPathsArray = null;
-        videoPath = null;
-        sendingText = null;
-        documentsPathsArray = null;
-        documentsOriginalPathsArray = null;
-        contactsToSend = null;
-        contactsToSendUri = null;
+    private void prepareItemForSending(AccountInstance accountInstance, long did, int account, CharSequence message){
+        if (photoPathsArray != null) {
+            if (sendingText != null && sendingText.length() <= 1024 && photoPathsArray.size() == 1) {
+                photoPathsArray.get(0).caption = sendingText;
+                sendingText = null;
+            }
+            SendMessagesHelper.prepareSendingMedia(accountInstance, photoPathsArray, did, null, null, false, false, null, true, 0);
+        }
+        if (documentsPathsArray != null || documentsUrisArray != null) {
+            String caption = null;
+            if (sendingText != null && sendingText.length() <= 1024 && ((documentsPathsArray != null ? documentsPathsArray.size() : 0) + (documentsUrisArray != null ? documentsUrisArray.size() : 0)) == 1) {
+                caption = sendingText;
+                sendingText = null;
+            }
+            SendMessagesHelper.prepareSendingDocuments(accountInstance, documentsPathsArray, documentsOriginalPathsArray, documentsUrisArray, caption, documentsMimeType, did, null, null, null, true, 0);
+        }
+        if (sendingText != null) {
+            SendMessagesHelper.prepareSendingText(accountInstance, sendingText, did, true, 0);
+        }
+        if (contactsToSend != null && !contactsToSend.isEmpty()) {
+            for (int a = 0; a < contactsToSend.size(); a++) {
+                TLRPC.User user = contactsToSend.get(a);
+                SendMessagesHelper.getInstance(account).sendMessage(user, did, null, null, null, true, 0);
+            }
+        }
+        if (!TextUtils.isEmpty(message)) {
+            SendMessagesHelper.prepareSendingText(accountInstance, message.toString(), did, true, 0);
+        }
     }
 
     private void onFinish() {
@@ -2723,7 +2825,7 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
 
         if (requestCode == 4) {
             if (!granted) {
-                showPermissionErrorAlert(LocaleController.getString("PermissionStorage", R.string.PermissionStorage));
+                showPermissionErrorAlert(LocaleController.getString("PermissionStorage", R.string.PermissionStorage, true));
             } else {
                 ImageLoader.getInstance().checkMediaPaths();
             }
@@ -2781,7 +2883,7 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
 
     private void showPermissionErrorAlert(String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+        builder.setTitle(getString(R.string.AppName));
         builder.setMessage(message);
         builder.setNegativeButton(LocaleController.getString("PermissionOpenSettings", R.string.PermissionOpenSettings), (dialog, which) -> {
             try {
@@ -2997,7 +3099,7 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
                 return;
             }
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+            builder.setTitle(getString(R.string.AppName));
             if (reason != 2 && reason != 3) {
                 builder.setNegativeButton(LocaleController.getString("MoreInfo", R.string.MoreInfo), (dialogInterface, i) -> {
                     if (!mainFragmentsStack.isEmpty()) {
@@ -3036,7 +3138,7 @@ public class LaunchActivity extends Activity implements ActionBarLayout.ActionBa
         } else if (id == NotificationCenter.wasUnableToFindCurrentLocation) {
             final HashMap<String, MessageObject> waitingForLocation = (HashMap<String, MessageObject>) args[0];
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+            builder.setTitle(getString(R.string.AppName));
             builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
             builder.setNegativeButton(LocaleController.getString("ShareYouLocationUnableManually", R.string.ShareYouLocationUnableManually), (dialogInterface, i) -> {
                 if (mainFragmentsStack.isEmpty()) {

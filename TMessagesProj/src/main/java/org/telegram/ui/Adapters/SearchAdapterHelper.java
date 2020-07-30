@@ -217,13 +217,15 @@ public class SearchAdapterHelper {
                                         chat = chatsMap.get(peer.channel_id);
                                     }
                                     if (chat != null) {
-                                        if (!allowChats || canAddGroupsOnly && !ChatObject.canAddBotsToChat(chat)) {
+                                        if (!allowChats || canAddGroupsOnly && !ChatObject.canAddBotsToChat(chat)
+                                               || MessagesController.getInstance(currentAccount).isDialogHidden(-chat.id)) {
                                             continue;
                                         }
                                         globalSearch.add(chat);
                                         globalSearchMap.put(-chat.id, chat);
                                     } else if (user != null) {
-                                        if (canAddGroupsOnly || !allowBots && user.bot || !allowSelf && user.self) {
+                                        if (canAddGroupsOnly || !allowBots && user.bot || !allowSelf && user.self
+                                        || MessagesController.getInstance(currentAccount).isDialogHidden(user.id)) {
                                             continue;
                                         }
                                         globalSearch.add(user);
@@ -244,13 +246,15 @@ public class SearchAdapterHelper {
                                         chat = chatsMap.get(peer.channel_id);
                                     }
                                     if (chat != null) {
-                                        if (!allowChats || canAddGroupsOnly && !ChatObject.canAddBotsToChat(chat)) {
+                                        if (!allowChats || canAddGroupsOnly && !ChatObject.canAddBotsToChat(chat)
+                                          || MessagesController.getInstance(currentAccount).isDialogHidden(-chat.id)) {
                                             continue;
                                         }
                                         localServerSearch.add(chat);
                                         globalSearchMap.put(-chat.id, chat);
                                     } else if (user != null) {
-                                        if (canAddGroupsOnly || !allowBots && user.bot || !allowSelf && user.self) {
+                                        if (canAddGroupsOnly || !allowBots && user.bot || !allowSelf && user.self
+                                                || MessagesController.getInstance(currentAccount).isDialogHidden(user.id)) {
                                             continue;
                                         }
                                         localServerSearch.add(user);
@@ -284,7 +288,7 @@ public class SearchAdapterHelper {
             for (int a = 0, N = arrayList.size(); a < N; a++) {
                 TLRPC.TL_contact contact = arrayList.get(a);
                 TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(contact.user_id);
-                if (user == null) {
+                if (user == null || MessagesController.getInstance(currentAccount).isDialogHidden(contact.user_id)) {
                     continue;
                 }
                 if (user.phone != null && user.phone.startsWith(phone)) {

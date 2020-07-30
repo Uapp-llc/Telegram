@@ -8329,7 +8329,7 @@ public class MessagesStorage extends BaseController {
         return chat;
     }
 
-    public void readAllDialogs(ArrayList<TLRPC.Dialog> dialogs) {
+    public void readAllDialogs(ArrayList<Long> dialogs) {
         storageQueue.postRunnable(() -> {
             try {
                 ArrayList<Integer> usersToLoad = new ArrayList<>();
@@ -8339,7 +8339,7 @@ public class MessagesStorage extends BaseController {
                 final LongSparseArray<ReadDialog> readDialogs = new LongSparseArray<>();
                 SQLiteCursor cursor;
                 for(int i = 0; i < dialogs.size(); i++){
-                    cursor = database.queryFinalized("SELECT did, last_mid, unread_count, date FROM dialogs WHERE did = " + dialogs.get(i).id);
+                    cursor = database.queryFinalized("SELECT did, last_mid, unread_count, date FROM dialogs WHERE did = " + dialogs.get(i));
                     while (cursor.next()) {
                         long did = cursor.longValue(0);
                         if (DialogObject.isFolderDialogId(did)) {
@@ -8394,9 +8394,8 @@ public class MessagesStorage extends BaseController {
                         ReadDialog dialog = readDialogs.valueAt(a);
                         getMessagesController().markDialogAsRead(did, dialog.lastMid, dialog.lastMid, dialog.date, false, dialog.unreadCount, true, 0);
                     }
+                    getMessagesController().refreshCategoriesDialogsMainList();
                 });
-
-                getMessagesController().sortDialogs(null);
             } catch (Exception e) {
                 FileLog.e(e);
             }

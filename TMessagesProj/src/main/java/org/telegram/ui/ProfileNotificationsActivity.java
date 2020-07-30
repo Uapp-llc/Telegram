@@ -61,9 +61,13 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import static org.telegram.messenger.NotificationsController.TYPE_CATEGORY;
+import static org.telegram.messenger.NotificationsController.TYPE_CHANNEL;
 
 public class ProfileNotificationsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
 
@@ -74,6 +78,7 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
     private long dialog_id;
 
     private boolean addingException;
+    private boolean categoryException;
 
     private boolean customEnabled;
     private boolean notificationsEnabled;
@@ -104,6 +109,7 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
     private int colorRow;
     private int ledInfoRow;
     private int rowCount;
+    private String categoryPrefixKey = "";
 
     private final static int done_button = 1;
 
@@ -115,6 +121,7 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
         super(args);
         dialog_id = args.getLong("dialog_id");
         addingException = args.getBoolean("exception", false);
+        categoryException = args.getBoolean("category", false);
     }
 
     @Override
@@ -192,10 +199,16 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
         ledInfoRow = rowCount++;
 
         SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
-        customEnabled = preferences.getBoolean("custom_" + dialog_id, false) || addingException;
+        boolean hasOverride;
+        int value;
+        if (categoryException) {
+            categoryPrefixKey = "category_";
+        }
 
-        boolean hasOverride = preferences.contains("notify2_" + dialog_id);
-        int value = preferences.getInt("notify2_" + dialog_id, 0);
+        customEnabled = preferences.getBoolean(categoryPrefixKey + "custom_" + dialog_id, false) || addingException;
+        hasOverride = preferences.contains(categoryPrefixKey + "notify2_" + dialog_id);
+        value = preferences.getInt(categoryPrefixKey + "notify2_" + dialog_id, 0);
+
         if (value == 0) {
             if (hasOverride) {
                 notificationsEnabled = true;
@@ -230,23 +243,22 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                 if (id == -1) {
                     if (!addingException && notificationsEnabled && customEnabled) {
                         SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
-                        preferences.edit().putInt("notify2_" + dialog_id, 0).commit();
+                        preferences.edit().putInt(categoryPrefixKey + "notify2_" + dialog_id, 0).commit();
                     }
                 } else if (id == done_button) {
                     SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                     SharedPreferences.Editor editor = preferences.edit();
-                    editor.putBoolean("custom_" + dialog_id, true);
-
+                    editor.putBoolean(categoryPrefixKey + "custom_" + dialog_id, true);
 
                     TLRPC.Dialog dialog = MessagesController.getInstance(currentAccount).dialogs_dict.get(dialog_id);
                     if (notificationsEnabled) {
-                        editor.putInt("notify2_" + dialog_id, 0);
+                        editor.putInt(categoryPrefixKey + "notify2_" + dialog_id, 0);
                         MessagesStorage.getInstance(currentAccount).setDialogFlags(dialog_id, 0);
                         if (dialog != null) {
                             dialog.notify_settings = new TLRPC.TL_peerNotifySettings();
                         }
                     } else {
-                        editor.putInt("notify2_" + dialog_id, 2);
+                        editor.putInt(categoryPrefixKey + "notify2_" + dialog_id, 2);
                         NotificationsController.getInstance(currentAccount).removeNotificationsForDialog(dialog_id);
                         MessagesStorage.getInstance(currentAccount).setDialogFlags(dialog_id, 1);
                         if (dialog != null) {
@@ -261,10 +273,8 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                         NotificationsSettingsActivity.NotificationException exception = new NotificationsSettingsActivity.NotificationException();
                         exception.did = dialog_id;
                         exception.hasCustom = true;
-                        exception.notify = preferences.getInt("notify2_" + dialog_id, 0);
-                        if (exception.notify != 0) {
-                            exception.muteUntil = preferences.getInt("notifyuntil_" + dialog_id, 0);
-                        }
+                        exception.notify = preferences.getInt(categoryPrefixKey + "notify2_" + dialog_id, 0);
+                        exception.muteUntil = preferences.getInt(categoryPrefixKey + "notifyuntil_" + dialog_id, 0);
                         delegate.didCreateNewException(exception);
                     }
                 }
@@ -300,7 +310,7 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                     SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                     customEnabled = !customEnabled;
                     notificationsEnabled = customEnabled;
-                    preferences.edit().putBoolean("custom_" + dialog_id, customEnabled).commit();
+                    preferences.edit().putBoolean(categoryPrefixKey + "custom_" + dialog_id, customEnabled).commit();
                     TextCheckBoxCell cell = (TextCheckBoxCell) view;
                     cell.setChecked(customEnabled);
                     checkRowsEnabled();
@@ -323,8 +333,7 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                             if (defaultUri != null) {
                                 defaultPath = defaultUri.getPath();
                             }
-
-                            String path = preferences.getString("sound_path_" + dialog_id, defaultPath);
+                            String path = preferences.getString(categoryPrefixKey + "sound_path_" + dialog_id, defaultPath);
                             if (path != null && !path.equals("NoSound")) {
                                 if (path.equals(defaultPath)) {
                                     currentSound = defaultUri;
@@ -353,8 +362,7 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                             if (defaultUri != null) {
                                 defaultPath = defaultUri.getPath();
                             }
-
-                            String path = preferences.getString("ringtone_path_" + dialog_id, defaultPath);
+                            String path = preferences.getString(categoryPrefixKey + "ringtone_path_" + dialog_id, defaultPath);
                             if (path != null && !path.equals("NoSound")) {
                                 if (path.equals(defaultPath)) {
                                     currentSound = defaultUri;
@@ -382,16 +390,17 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                     } else if (position == previewRow) {
                         TextCheckCell checkCell = (TextCheckCell) view;
                         SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
-                        preferences.edit().putBoolean("content_preview_" + dialog_id, !checkCell.isChecked()).commit();
+                        preferences.edit().putBoolean(categoryPrefixKey + "content_preview_" + dialog_id, !checkCell.isChecked()).commit();
+
                         checkCell.setChecked(!checkCell.isChecked());
                     } else if (position == callsVibrateRow) {
-                        showDialog(AlertsCreator.createVibrationSelectDialog(getParentActivity(), dialog_id, "calls_vibrate_", () -> {
+                        showDialog(AlertsCreator.createVibrationSelectDialog(getParentActivity(), dialog_id, categoryPrefixKey + "calls_vibrate_", () -> {
                             if (adapter != null) {
                                 adapter.notifyItemChanged(callsVibrateRow);
                             }
                         }));
                     } else if (position == priorityRow) {
-                        showDialog(AlertsCreator.createPrioritySelectDialog(getParentActivity(), dialog_id, -1, -1, () -> {
+                        showDialog(AlertsCreator.createPrioritySelectDialog(getParentActivity(), dialog_id, categoryException ? TYPE_CATEGORY : -1, -1, () -> {
                             if (adapter != null) {
                                 adapter.notifyItemChanged(priorityRow);
                             }
@@ -402,8 +411,9 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                         }
                         final Context context1 = getParentActivity();
                         SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
-                        int notifyMaxCount = preferences.getInt("smart_max_count_" + dialog_id, 2);
-                        int notifyDelay = preferences.getInt("smart_delay_" + dialog_id, 3 * 60);
+                        int notifyMaxCount = preferences.getInt(categoryPrefixKey + "smart_max_count_" + dialog_id, 2);
+                        int notifyDelay = preferences.getInt(categoryPrefixKey + "smart_delay_" + dialog_id, 3 * 60);
+
                         if (notifyMaxCount == 0) {
                             notifyMaxCount = 2;
                         }
@@ -458,8 +468,9 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                             int notifyMaxCount1 = position1 % 10 + 1;
                             int notifyDelay1 = position1 / 10 + 1;
                             SharedPreferences preferences1 = MessagesController.getNotificationsSettings(currentAccount);
-                            preferences1.edit().putInt("smart_max_count_" + dialog_id, notifyMaxCount1).commit();
-                            preferences1.edit().putInt("smart_delay_" + dialog_id, notifyDelay1 * 60).commit();
+                            preferences1.edit().putInt(categoryPrefixKey + "smart_max_count_" + dialog_id, notifyMaxCount1).commit();
+                            preferences1.edit().putInt(categoryPrefixKey + "smart_delay_" + dialog_id, notifyDelay1 * 60).commit();
+
                             if (adapter != null) {
                                 adapter.notifyItemChanged(smartRow);
                             }
@@ -471,7 +482,7 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                         builder.setPositiveButton(LocaleController.getString("Cancel", R.string.Cancel), null);
                         builder.setNegativeButton(LocaleController.getString("SmartNotificationsDisabled", R.string.SmartNotificationsDisabled), (dialog, which) -> {
                             SharedPreferences preferences12 = MessagesController.getNotificationsSettings(currentAccount);
-                            preferences12.edit().putInt("smart_max_count_" + dialog_id, 0).commit();
+                            preferences12.edit().putInt(categoryPrefixKey + "smart_max_count_" + dialog_id, 0).commit();
                             if (adapter != null) {
                                 adapter.notifyItemChanged(smartRow);
                             }
@@ -482,14 +493,14 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                         if (getParentActivity() == null) {
                             return;
                         }
-                        showDialog(AlertsCreator.createColorSelectDialog(getParentActivity(), dialog_id, -1, -1, () -> {
+                        showDialog(AlertsCreator.createColorSelectDialog(getParentActivity(), ProfileNotificationsActivity.this, dialog_id, categoryException ? TYPE_CATEGORY : -1, -1, () -> {
                             if (adapter != null) {
                                 adapter.notifyItemChanged(colorRow);
                             }
                         }));
                     } else if (position == popupEnabledRow) {
                         SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
-                        preferences.edit().putInt("popup_" + dialog_id, 1).commit();
+                        preferences.edit().putInt(categoryPrefixKey + "popup_" + dialog_id, 1).commit();
                         ((RadioCell) view).setChecked(true, true);
                         view = listView.findViewWithTag(2);
                         if (view != null) {
@@ -497,7 +508,7 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                         }
                     } else if (position == popupDisabledRow) {
                         SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
-                        preferences.edit().putInt("popup_" + dialog_id, 2).commit();
+                        preferences.edit().putInt(categoryPrefixKey + "popup_" + dialog_id, 2).commit();
                         ((RadioCell) view).setChecked(true, true);
                         view = listView.findViewWithTag(1);
                         if (view != null) {
@@ -544,19 +555,19 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
 
             if (requestCode == 12) {
                 if (name != null) {
-                    editor.putString("sound_" + dialog_id, name);
-                    editor.putString("sound_path_" + dialog_id, ringtone.toString());
+                    editor.putString(categoryPrefixKey + "sound_" + dialog_id, name);
+                    editor.putString(categoryPrefixKey + "sound_path_" + dialog_id, ringtone.toString());
                 } else {
-                    editor.putString("sound_" + dialog_id, "NoSound");
-                    editor.putString("sound_path_" + dialog_id, "NoSound");
+                    editor.putString(categoryPrefixKey + "sound_" + dialog_id, "NoSound");
+                    editor.putString(categoryPrefixKey + "sound_path_" + dialog_id, "NoSound");
                 }
             } else if (requestCode == 13) {
                 if (name != null) {
-                    editor.putString("ringtone_" + dialog_id, name);
-                    editor.putString("ringtone_path_" + dialog_id, ringtone.toString());
+                    editor.putString(categoryPrefixKey + "ringtone_" + dialog_id, name);
+                    editor.putString(categoryPrefixKey + "ringtone_path_" + dialog_id, ringtone.toString());
                 } else {
-                    editor.putString("ringtone_" + dialog_id, "NoSound");
-                    editor.putString("ringtone_path_" + dialog_id, "NoSound");
+                    editor.putString(categoryPrefixKey + "ringtone_" + dialog_id, "NoSound");
+                    editor.putString(categoryPrefixKey + "ringtone_path_" + dialog_id, "NoSound");
                 }
             }
             editor.commit();
@@ -739,19 +750,19 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                     TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
                     SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                     if (position == soundRow) {
-                        String value = preferences.getString("sound_" + dialog_id, LocaleController.getString("SoundDefault", R.string.SoundDefault));
+                        String value = preferences.getString(categoryPrefixKey + "sound_" + dialog_id, LocaleController.getString("SoundDefault", R.string.SoundDefault));
                         if (value.equals("NoSound")) {
                             value = LocaleController.getString("NoSound", R.string.NoSound);
                         }
                         textCell.setTextAndValue(LocaleController.getString("Sound", R.string.Sound), value, true);
                     } else if (position == ringtoneRow) {
-                        String value = preferences.getString("ringtone_" + dialog_id, LocaleController.getString("DefaultRingtone", R.string.DefaultRingtone));
+                        String value = preferences.getString(categoryPrefixKey + "ringtone_" + dialog_id, LocaleController.getString("DefaultRingtone", R.string.DefaultRingtone));
                         if (value.equals("NoSound")) {
                             value = LocaleController.getString("NoSound", R.string.NoSound);
                         }
                         textCell.setTextAndValue(LocaleController.getString("VoipSettingsRingtone", R.string.VoipSettingsRingtone), value, false);
                     } else if (position == vibrateRow) {
-                        int value = preferences.getInt("vibrate_" + dialog_id, 0);
+                        int value = preferences.getInt(categoryPrefixKey + "vibrate_" + dialog_id, 0);
                         if (value == 0 || value == 4) {
                             textCell.setTextAndValue(LocaleController.getString("Vibrate", R.string.Vibrate), LocaleController.getString("VibrationDefault", R.string.VibrationDefault), smartRow != -1 || priorityRow != -1);
                         } else if (value == 1) {
@@ -762,7 +773,7 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                             textCell.setTextAndValue(LocaleController.getString("Vibrate", R.string.Vibrate), LocaleController.getString("Long", R.string.Long), smartRow != -1 || priorityRow != -1);
                         }
                     } else if (position == priorityRow) {
-                        int value = preferences.getInt("priority_" + dialog_id, 3);
+                        int value = preferences.getInt(categoryPrefixKey + "priority_" + dialog_id, 3);
                         if (value == 0) {
                             textCell.setTextAndValue(LocaleController.getString("NotificationsImportance", R.string.NotificationsImportance), LocaleController.getString("NotificationsPriorityHigh", R.string.NotificationsPriorityHigh), false);
                         } else if (value == 1 || value == 2) {
@@ -775,8 +786,8 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                             textCell.setTextAndValue(LocaleController.getString("NotificationsImportance", R.string.NotificationsImportance), LocaleController.getString("NotificationsPriorityMedium", R.string.NotificationsPriorityMedium), false);
                         }
                     } else if (position == smartRow) {
-                        int notifyMaxCount = preferences.getInt("smart_max_count_" + dialog_id, 2);
-                        int notifyDelay = preferences.getInt("smart_delay_" + dialog_id, 3 * 60);
+                        int notifyMaxCount = preferences.getInt(categoryPrefixKey + "smart_max_count_" + dialog_id, 2);
+                        int notifyDelay = preferences.getInt(categoryPrefixKey + "smart_delay_" + dialog_id, 3 * 60);
                         if (notifyMaxCount == 0) {
                             textCell.setTextAndValue(LocaleController.getString("SmartNotifications", R.string.SmartNotifications), LocaleController.getString("SmartNotificationsDisabled", R.string.SmartNotificationsDisabled), priorityRow != -1);
                         } else {
@@ -784,7 +795,7 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                             textCell.setTextAndValue(LocaleController.getString("SmartNotifications", R.string.SmartNotifications), LocaleController.formatString("SmartNotificationsInfo", R.string.SmartNotificationsInfo, notifyMaxCount, minutes), priorityRow != -1);
                         }
                     } else if (position == callsVibrateRow) {
-                        int value = preferences.getInt("calls_vibrate_" + dialog_id, 0);
+                        int value = preferences.getInt(categoryPrefixKey + "calls_vibrate_" + dialog_id, 0);
                         if (value == 0 || value == 4) {
                             textCell.setTextAndValue(LocaleController.getString("Vibrate", R.string.Vibrate), LocaleController.getString("VibrationDefault", R.string.VibrationDefault), true);
                         } else if (value == 1) {
@@ -825,10 +836,13 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                     TextColorCell textCell = (TextColorCell) holder.itemView;
                     SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                     int color;
-                    if (preferences.contains("color_" + dialog_id)) {
-                        color = preferences.getInt("color_" + dialog_id, 0xff0000ff);
+                    if (preferences.contains(categoryPrefixKey + "color_" + dialog_id)) {
+                        color = preferences.getInt(categoryPrefixKey + "color_" + dialog_id, 0xff0000ff);
                     } else {
-                        if ((int) dialog_id < 0) {
+                        if (categoryException) {
+                            int category_id = (int) MessagesController.getInstance(getCurrentAccount()).getCategoryIdForDialog(dialog_id);
+                            color = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_LED, category_id), 0xff0000ff);
+                        } else if ((int) dialog_id < 0) {
                             color = preferences.getInt("GroupLed", 0xff0000ff);
                         } else {
                             color = preferences.getInt("MessagesLed", 0xff0000ff);
@@ -846,9 +860,16 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                 case 4: {
                     RadioCell radioCell = (RadioCell) holder.itemView;
                     SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
-                    int popup = preferences.getInt("popup_" + dialog_id, 0);
+                    int popup = preferences.getInt(categoryPrefixKey + "popup_" + dialog_id, 0);
                     if (popup == 0) {
-                        popup = preferences.getInt((int) dialog_id < 0 ? "popupGroup" : "popupAll", 0);
+                        if (categoryException) {
+                            int category_id = (int) MessagesController.getInstance(getCurrentAccount()).getCategoryIdForDialog(dialog_id);
+                            popup = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_POPUP, category_id), 0xff0000ff);
+                        } else if ((int) dialog_id < 0) {
+                            popup = preferences.getInt("popupGroup", 0xff0000ff);
+                        } else {
+                            popup = preferences.getInt("popupAll", 0xff0000ff);
+                        }
                         if (popup != 0) {
                             popup = 1;
                         } else {
@@ -888,7 +909,8 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
                     if (position == enableRow) {
                         checkCell.setTextAndCheck(LocaleController.getString("Notifications", R.string.Notifications), notificationsEnabled, true);
                     } else if (position == previewRow) {
-                        checkCell.setTextAndCheck(LocaleController.getString("MessagePreview", R.string.MessagePreview), preferences.getBoolean("content_preview_" + dialog_id, true), true);
+                        String key = categoryPrefixKey + "content_preview_" + dialog_id;
+                        checkCell.setTextAndCheck(LocaleController.getString("MessagePreview", R.string.MessagePreview), preferences.getBoolean(key, true), true);
                     }
                     break;
                 }
@@ -954,6 +976,7 @@ public class ProfileNotificationsActivity extends BaseFragment implements Notifi
             }
             return 0;
         }
+
     }
 
     @Override

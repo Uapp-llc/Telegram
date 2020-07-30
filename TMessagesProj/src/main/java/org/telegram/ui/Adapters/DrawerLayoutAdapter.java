@@ -214,7 +214,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter {
             items.add(new Item(2, LocaleController.getString("NewGroup", R.string.NewGroup), R.drawable.menu_groups_ny));
             items.add(new Item(3, LocaleController.getString("NewSecretChat", R.string.NewSecretChat), R.drawable.menu_secret_ny));
             items.add(new Item(4, LocaleController.getString("NewChannel", R.string.NewChannel), R.drawable.menu_channel_ny));
-            items.add(new Item(12, LocaleController.getString("NewCategory", R.string.NewCategory), R.drawable.menu_broadcast_14));
+            items.add(new Item(12, LocaleController.getString("NewCategory", R.string.NewCategory), R.drawable.ic_category));
             items.add(new Item(6, LocaleController.getString("Contacts", R.string.Contacts), R.drawable.menu_contacts_ny));
             items.add(new Item(10, LocaleController.getString("Calls", R.string.Calls), R.drawable.menu_calls_ny));
             items.add(new Item(11, LocaleController.getString("SavedMessages", R.string.SavedMessages), R.drawable.menu_bookmarks_ny));
@@ -226,7 +226,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter {
             items.add(new Item(2, LocaleController.getString("NewGroup", R.string.NewGroup), R.drawable.menu_groups_14));
             items.add(new Item(3, LocaleController.getString("NewSecretChat", R.string.NewSecretChat), R.drawable.menu_secret_14));
             items.add(new Item(4, LocaleController.getString("NewChannel", R.string.NewChannel), R.drawable.menu_broadcast_14));
-            items.add(new Item(12, LocaleController.getString("NewCategory", R.string.NewCategory), R.drawable.menu_broadcast_14));
+            items.add(new Item(12, LocaleController.getString("NewCategory", R.string.NewCategory), R.drawable.ic_category));
             items.add(new Item(6, LocaleController.getString("Contacts", R.string.Contacts), R.drawable.menu_contacts_14));
             items.add(new Item(10, LocaleController.getString("Calls", R.string.Calls), R.drawable.menu_calls_14));
             items.add(new Item(11, LocaleController.getString("SavedMessages", R.string.SavedMessages), R.drawable.menu_bookmarks_14));
@@ -238,7 +238,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter {
             items.add(new Item(2, LocaleController.getString("NewGroup", R.string.NewGroup), R.drawable.menu_groups));
             items.add(new Item(3, LocaleController.getString("NewSecretChat", R.string.NewSecretChat), R.drawable.menu_secret));
             items.add(new Item(4, LocaleController.getString("NewChannel", R.string.NewChannel), R.drawable.menu_broadcast));
-            items.add(new Item(12, LocaleController.getString("NewCategory", R.string.NewCategory), R.drawable.menu_broadcast_14));
+            items.add(new Item(12, LocaleController.getString("NewCategory", R.string.NewCategory), R.drawable.ic_category));
             items.add(new Item(6, LocaleController.getString("Contacts", R.string.Contacts), R.drawable.menu_contacts));
             items.add(new Item(10, LocaleController.getString("Calls", R.string.Calls), R.drawable.menu_calls));
             items.add(new Item(11, LocaleController.getString("SavedMessages", R.string.SavedMessages), R.drawable.menu_saved));

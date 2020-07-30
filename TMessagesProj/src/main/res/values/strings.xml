@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="AppName">Telegram</string>
-    <string name="AppNameBeta">Telegram Beta</string>
+    <string name="AppName">Skintel</string>
+    <string name="AppNameBeta">Skintel</string>
     <string name="LanguageName">English</string>
     <string name="English">English</string>
     <string name="LanguageNameInEnglish">English</string>
@@ -26,9 +26,9 @@
     <string name="SentAppCode">We\'ve sent the code to the **Telegram** app on your other device.</string>
     <string name="SentAppCodeTitle">Check your Telegram messages</string>
     <string name="SentSmsCodeTitle">Enter code</string>
-    <string name="SentCallCode">We\'re calling your phone **%1$s**.\n\nDon\'t accept the call, Telegram will process everything automatically.</string>
+    <string name="SentCallCode">We\'re calling your phone **%1$s**.\n\nDon\'t accept the call, Skintel will process everything automatically.</string>
     <string name="SentCallOnly">Calling your phone **%1$s** to dictate the code.</string>
-    <string name="CallText">Telegram will call you in %1$d:%2$02d</string>
+    <string name="CallText">Skintel will call you in %1$d:%2$02d</string>
     <string name="SmsText">Sending you an SMS in %1$d:%2$02d</string>
     <string name="Calling">Calling you...</string>
     <string name="SendingSms">Sending SMS...</string>
@@ -45,7 +45,7 @@
     <string name="ResetAccountButton">RESET ACCOUNT</string>
     <string name="CancelLinkExpired">Link is invalid or expired.</string>
     <string name="CancelLinkSuccess">The deletion process was cancelled for your account %1$s. You may close this window now.</string>
-    <string name="OtherLoginCode">Your login code is **%1$s**. Enter it in the Telegram app where you are trying to log in.\n\nDo not give this code to anyone.</string>
+    <string name="OtherLoginCode">Your login code is **%1$s**. Enter it in the Skintel app where you are trying to log in.\n\nDo not give this code to anyone.</string>
     <!--signup view-->
     <string name="YourName">Your name</string>
     <string name="RegisterText2">Enter your name and add a profile picture.</string>
@@ -101,7 +101,7 @@
     <string name="PaymentFailed">Sorry, the payment was declined.</string>
     <string name="PaymentConnectionFailed">Unable to reach payment server. Please check your internet connection and try again.</string>
     <string name="PaymentWarning">Warning</string>
-    <string name="PaymentWarningText">Neither Telegram, nor %1$s will have access to your credit card information. Credit card details will be handled only by the payment system, %2$s.\n\nPayments will go directly to the developer of %1$s. Telegram cannot provide any guarantees, so proceed at your own risk. In case of problems, please contact the developer of %1$s or your bank.</string>
+    <string name="PaymentWarningText">Neither Skintel, nor %1$s will have access to your credit card information. Credit card details will be handled only by the payment system, %2$s.\n\nPayments will go directly to the developer of %1$s. Skintel cannot provide any guarantees, so proceed at your own risk. In case of problems, please contact the developer of %1$s or your bank.</string>
     <string name="PaymentPassword">Password &amp; Email</string>
     <string name="PaymentPasswordTitle">Password</string>
     <string name="PaymentPasswordEnter">Enter a password</string>
@@ -121,7 +121,7 @@
     <string name="NewGroup">New Group</string>
     <string name="Yesterday">yesterday</string>
     <string name="NoResult">No results</string>
-    <string name="NoChats">Welcome to Telegram</string>
+    <string name="NoChats">Welcome to Skintel</string>
     <string name="RecentlyViewed">Recently viewed</string>
     <string name="RecentlyViewedHide">HIDE</string>
     <string name="NoChatsHelp">Start messaging by tapping the pencil button in the bottom right corner.</string>
@@ -211,7 +211,7 @@
     <string name="Strike">Strikethrough</string>
     <string name="Underline">Underline</string>
     <string name="Regular">Regular</string>
-    <string name="ContactsPermissionAlert">**Telegram** needs access to your contacts so that you can connect with your friends across all your devices. Your contacts will be continuously synced with Telegram\'s heavily encrypted cloud servers.</string>
+    <string name="ContactsPermissionAlert">Skintel needs access to your contacts so that you can connect with your friends across all your devices. Your contacts will be continuously synced with Telegram\'s heavily encrypted cloud servers.</string>
     <string name="ContactsPermissionAlertNotNow">NOT NOW</string>
     <string name="ContactsPermissionAlertContinue">CONTINUE</string>
     <string name="YourContacts">Your contacts on Telegram</string>
@@ -535,6 +535,15 @@
     <string name="SelectCategory">Select Category</string>
     <string name="DeleteCategory">Delete Category</string>
     <string name="CategorySettings">Category Settings</string>
+    <string name="DeleteCategoryTitle">Delete category</string>
+    <string name="AreYouSureDeleteCategory">Are you sure you want to delete selected category?</string>
+    <string name="NoChatsInCategoryHelp">Add chats by tapping the plus button in the bottom right corner.</string>
+    <string name="NoCategoryHelp">Add category by tapping the plus button in the bottom right corner.</string>
+    <string name="CategoryDialogPasscodeInfo">Note: if enabled, the dialog shortcut will be disabled. If you forget the passcode, you\'ll need to delete and reinstall the app. All categories and sorting will be lost.</string>
+    <string name="CategoryDialogHideInfo">If enabled, the chat will be hidden from the main list.\n\nYou will be able to find it only by entering your passcode into the search field. Note: If you have created shortcut fot the dialog, you may need to delete it manually. if you forget the passcode, you\'ll need to delete and reinstall the app. All categories and sorting will be lost.</string>
+    <string name="HideCategoryDialog">Hide</string>
+    <string name="Locked">Locked</string>
+    <string name="Reorder">Reorder</string>
     <!--polls-->
     <string name="NewPoll">New Poll</string>
     <string name="NewQuiz">New Quiz</string>
@@ -831,7 +840,7 @@
     <string name="OpenUrlOption1">Log in to %1$s as **%2$s**</string>
     <string name="OpenUrlOption2">Allow **%1$s** to send me messages</string>
     <string name="CancelSending">Cancel sending</string>
-    <string name="BotPermissionGameAlert">Allow %1$s to pass your Telegram name and id (not your phone number) to pages you open with this bot?</string>
+    <string name="BotPermissionGameAlert">Allow %1$s to pass your Skintel name and id (not your phone number) to pages you open with this bot?</string>
     <string name="ReportSpamLocation">GROUP UNRELATED TO LOCATION?</string>
     <string name="ReportUnrelatedGroup">Report unrelated group</string>
     <string name="ReportUnrelatedGroupText">Please let us know if this group is not related to this location:\n\n**%1$s**</string>
@@ -844,7 +853,7 @@
     <string name="AddContactChat">ADD CONTACT</string>
     <string name="AddContactFullChat">ADD %1$s TO CONTACTS</string>
     <string name="ViewContact">VIEW CONTACT</string>
-    <string name="BlockUserAlert">Do you want to block **%1$s** from messaging and calling you on Telegram?</string>
+    <string name="BlockUserAlert">Do you want to block **%1$s** from messaging and calling you on Skintel?</string>
     <string name="ReportSpamAlert">Are you sure you want to report spam from this user?</string>
     <string name="ReportSpamAlertGroup">Are you sure you want to report spam from this group?</string>
     <string name="ReportSpamAlertChannel">Are you sure you want to report spam from this channel?</string>
@@ -1037,15 +1046,15 @@
     <string name="NotificationGroupKickMember">%1$s removed %3$s from the group %2$s</string>
     <string name="NotificationGroupKickYou">%1$s removed you from the group %2$s</string>
     <string name="NotificationGroupLeftMember">%1$s left the group %2$s</string>
-    <string name="NotificationContactJoined">%1$s joined Telegram!</string>
-    <string name="NotificationUnrecognizedDevice">%1$s,\nWe detected a login into your account from a new device on %2$s\n\nDevice: %3$s\nLocation: %4$s\n\nIf this wasn\'t you, you can go to Settings - Privacy and Security - Sessions and terminate that session.\n\nIf you think that somebody logged in to your account against your will, you can enable two-step verification in Privacy and Security settings.\n\nSincerely,\nThe Telegram Team</string>
+    <string name="NotificationContactJoined">%1$s joined Skintel!</string>
+    <string name="NotificationUnrecognizedDevice">%1$s,\nWe detected a login into your account from a new device on %2$s\n\nDevice: %3$s\nLocation: %4$s\n\nIf this wasn\'t you, you can go to Settings - Privacy and Security - Sessions and terminate that session.\n\nIf you think that somebody logged in to your account against your will, you can enable two-step verification in Privacy and Security settings.\n\nSincerely,\nThe Skintel Team</string>
     <string name="NotificationContactNewPhoto">%1$s updated profile photo</string>
     <string name="NotificationInvitedToGroupByLink">%1$s joined to the group %2$s via invite link</string>
     <string name="NotificationGroupFew">%1$s sent %3$s to the group %2$s</string>
     <string name="NotificationGroupAlbum">%1$s sent an album to the group %2$s</string>
     <string name="NotificationGroupForwardedFew">%1$s forwarded %3$s to the group %2$s</string>
-    <string name="NotificationHiddenName">Telegram</string>
-    <string name="NotificationHiddenChatName">Telegram</string>
+    <string name="NotificationHiddenName">Uapp Skintel</string>
+    <string name="NotificationHiddenChatName">Uapp Skintel</string>
     <string name="NotificationHiddenChatUserName">User</string>
     <string name="NotificationHiddenMessage">New message</string>
     <string name="Reply">Reply</string>
@@ -1091,7 +1100,7 @@
     <string name="NotificationActionPinnedGeoLiveChannel">%1$s pinned a live location</string>
     <string name="NotificationActionPinnedGifChannel">%1$s pinned a GIF</string>
     <string name="NotificationActionPinnedMusicChannel">%1$s pinned an audio file</string>
-    <string name="SecretChatName">Telegram</string>
+    <string name="SecretChatName">Skintel</string>
     <!--contacts view-->
     <string name="SelectContact">Select Contact</string>
     <string name="SelectContacts">Select Contacts</string>
@@ -1099,7 +1108,7 @@
     <string name="ShareContactTitle">Share Contact</string>
     <string name="AddContactPhonebookTitle">Add Contact</string>
     <string name="NoContacts">No contacts yet</string>
-    <string name="InviteText2">Hey, I\'m using Telegram to chat. Join me! Download it here: %1$s</string>
+    <string name="InviteText2">Hey, I\'m using Skintel to chat. Join me! Download it here: %1$s</string>
     <string name="TodayAt">at</string>
     <string name="YesterdayAt">yesterday at</string>
     <string name="TodayAtFormatted">at %1$s</string>
@@ -1117,11 +1126,11 @@
     <string name="WithinAMonth">last seen within a month</string>
     <string name="ALongTimeAgo">last seen a long time ago</string>
     <string name="NewMessageTitle">New Message</string>
-    <string name="InviteFriendsHelp">Select contacts to invite them to Telegram</string>
-    <string name="InviteToTelegram">INVITE TO TELEGRAM</string>
-    <string name="ShareTelegram">Share Telegram...</string>
+    <string name="InviteFriendsHelp">Select contacts to invite them to Skintel</string>
+    <string name="InviteToTelegram">INVITE TO Skintel</string>
+    <string name="ShareTelegram">Share Skintel...</string>
     <string name="UpdateContactsTitle">Update contacts?</string>
-    <string name="UpdateContactsMessage">Telegram has detected many unsynced contacts, would you like to sync them now? Choose \'OK\' if you\'re using your own device, SIM card and Google account.</string>
+    <string name="UpdateContactsMessage">Skintel has detected many unsynced contacts, would you like to sync them now? Choose \'OK\' if you\'re using your own device, SIM card and Google account.</string>
     <string name="SortedByName">Sorted by name</string>
     <string name="SortedByLastSeen">Sorted by last seen time</string>
     <string name="AddContactByPhone">Add %1$s</string>
@@ -1183,8 +1192,8 @@
     <string name="BlockContact">Block user</string>
     <string name="BlockUser">Block user</string>
     <string name="BlockUsers">Block users</string>
-    <string name="BlockUserMessage">Do you want to block **%1$s** from messaging and calling you on Telegram?</string>
-    <string name="BlockUsersMessage">Do you want to block **%1$s** from messaging and calling you on Telegram?</string>
+    <string name="BlockUserMessage">Do you want to block **%1$s** from messaging and calling you on Skintel?</string>
+    <string name="BlockUsersMessage">Do you want to block **%1$s** from messaging and calling you on Skintel?</string>
     <string name="UserBlocked">User blocked</string>
     <string name="UserUnblocked">User unblocked</string>
     <string name="EditContact">Edit contact</string>
@@ -1214,7 +1223,7 @@
     <string name="MessageLifetimePhoto">If you set a timer, the photo will self-destruct after it was viewed.</string>
     <string name="MessageLifetimeVideo">If you set a timer, the video will self-destruct after it was viewed.</string>
     <string name="ShortMessageLifetimeForever">Off</string>
-    <string name="EncryptionKeyDescription">This image and text were derived from the encryption key for this secret chat with **%1$s**.\n\nIf they look the same on **%2$s\'s** device, end-to-end encryption is guaranteed.\n\nLearn more at telegram.org</string>
+    <string name="EncryptionKeyDescription">This image and text were derived from the encryption key for this secret chat with **%1$s**.\n\nIf they look the same on **%2$s\'s** device, end-to-end encryption is guaranteed.\n\nLearn more at Telegram.org</string>
     <string name="EncryptionKeyLink">https://telegram.org/faq#secret-chats</string>
     <string name="NumberUnknown">Unknown</string>
     <string name="PhoneHidden">Unknown</string>
@@ -1239,7 +1248,7 @@
     <string name="UsernameInvalidShort">A username must have at least 5 characters.</string>
     <string name="UsernameInvalidLong">The username must not exceed 32 characters.</string>
     <string name="UsernameInvalidStartNumber">Sorry, a username can\'t start with a number.</string>
-    <string name="UsernameHelp">You can choose a username on **Telegram**. If you do, other people will be able to find you by this username and contact you without knowing your phone number.\n\nYou can use **a–z**, **0–9** and underscores. Minimum length is **5** characters.</string>
+    <string name="UsernameHelp">You can choose a username on **Skintel**. If you do, other people will be able to find you by this username and contact you without knowing your phone number.\n\nYou can use **a–z**, **0–9** and underscores. Minimum length is **5** characters.</string>
     <string name="UsernameHelpLink">This link opens a chat with you:\n%1$s</string>
     <string name="UsernameChecking">Checking username...</string>
     <string name="UsernameAvailable">%1$s is available.</string>
@@ -1277,7 +1286,7 @@
     <string name="NoEmojiFound">No emoji found</string>
     <string name="NoMasks">No masks yet</string>
     <string name="EmojiSuggestions">Emoji suggestions</string>
-    <string name="EmojiSuggestionsInfo">**Telegram** lets you find emoji by thousands of keywords, but there is always something missing. If you want to suggest a new emoji replacement, you can help us by visiting:</string>
+    <string name="EmojiSuggestionsInfo">**Skintel** lets you find emoji by thousands of keywords, but there is always something missing. If you want to suggest a new emoji replacement, you can help us by visiting:</string>
     <string name="EmojiSuggestionsUrl">https://translations.telegram.org/%1$s/emoji</string>
     <string name="Masks">Masks</string>
     <string name="MasksInfo">You can add masks to photos you send. To do this, open the photo editor before sending a photo.</string>
@@ -1286,7 +1295,7 @@
     <string name="SuggestStickersAll">All Sets</string>
     <string name="SuggestStickersInstalled">My Sets</string>
     <string name="SuggestStickersNone">None</string>
-    <string name="FeaturedStickersInfo">These stickers are currently trending on Telegram. You can add custom stickers via the @stickers bot.</string>
+    <string name="FeaturedStickersInfo">These stickers are currently trending on Skintel. You can add custom stickers via the @stickers bot.</string>
     <string name="ArchivedStickers">Archived Stickers</string>
     <string name="ArchivedMasks">Archived Masks</string>
     <string name="ArchivedStickersEmpty">No archived stickers</string>
@@ -1352,7 +1361,7 @@
     <string name="NewThemeTitle">New Theme</string>
     <string name="EditThemeTitle">Edit Theme</string>
     <string name="CreateNewThemeHelp">Tap on the palette icon to view the list of elements on each screen - and edit them.</string>
-    <string name="CreateNewThemeAlert">You can create your own theme by changing colors within the app.\n\nYou can always switch back to the default Telegram theme here.</string>
+    <string name="CreateNewThemeAlert">You can create your own theme by changing colors within the app.\n\nYou can always switch back to the default Skintel theme here.</string>
     <string name="ThemeSetUrlHelp">You can use a-z, 0-9 and underscores.\nMinimum length is 5 characters.</string>
     <string name="ThemeHelpLink">Your theme will be updated for all users each time you change it. Anyone can install it using this link:\n%1$s</string>
     <string name="ThemeCreateHelp">Anyone can install your theme using this link. When you change the theme, it will be updated for all users who installed it.\n\nThe theme will be based on your currently selected theme and wallpaper.</string>
@@ -1446,7 +1455,7 @@
     <string name="NotificationsAndSounds">Notifications and Sounds</string>
     <string name="CustomNotifications">Custom Notifications</string>
     <string name="ProfilePopupNotification">Popup notifications</string>
-    <string name="ProfilePopupNotificationInfo">New messages from this contact will appear on your screen when you are not using Telegram.</string>
+    <string name="ProfilePopupNotificationInfo">New messages from this contact will appear on your screen when you are not using Skintel.</string>
     <string name="NotificationsLed">LED</string>
     <string name="NotificationsLedColor">Color</string>
     <string name="ColorBlue">Blue</string>
@@ -1545,7 +1554,7 @@
     <string name="LanguageUnofficial">Unofficial languages</string>
     <string name="LanguageUnsupportedError">There is no such language.</string>
     <string name="LanguageSame">You are already using this language pack (**%1$s**). You can change your language at any time in Settings.</string>
-    <string name="LanguageUnknownCustomAlert">Unfortunately, this custom language pack (**%1$s**) doesn\'t contain data for Telegram Android.</string>
+    <string name="LanguageUnknownCustomAlert">Unfortunately, this custom language pack (**%1$s**) doesn\'t contain data for Skintel Android.</string>
     <string name="AskAQuestionInfo">Please note that Telegram Support is done by volunteers. We try to respond as quickly as possible, but it may take a while.\n\nPlease take a look at the <![CDATA[<a href=\"https://telegram.org/faq#general-questions\">Telegram FAQ</a>]]>: it has answers to most questions and important tips for <![CDATA[<a href=\"https://telegram.org/faq#troubleshooting\">troubleshooting</a>]]>.</string>
     <string name="AskButton">Ask a volunteer</string>
     <string name="TelegramFAQ">Telegram FAQ</string>
@@ -1563,7 +1572,7 @@
     <string name="NotificationsService">Keep-Alive Service</string>
     <string name="NotificationsServiceInfo">Relaunch app when shut down. Enable for reliable notifications.</string>
     <string name="NotificationsServiceConnection">Background Connection</string>
-    <string name="NotificationsServiceConnectionInfo">Keep a low impact background connection to Telegram for reliable notifications.</string>
+    <string name="NotificationsServiceConnectionInfo">Keep a low impact background connection to Skintel for reliable notifications.</string>
     <string name="SortBy">Sort By</string>
     <string name="ImportContacts">Import Contacts</string>
     <string name="SortFirstName">First name</string>
@@ -1684,7 +1693,7 @@
     <string name="Emoji">Emoji</string>
     <string name="LargeEmoji">Large Emoji</string>
     <string name="EmojiUseDefault">Use system default emoji</string>
-    <string name="TelegramVersion">Telegram for Android %1$s</string>
+    <string name="TelegramVersion">Skintel for Android</string>
     <string name="DebugMenu">Debug Menu</string>
     <string name="DebugSendLogs">Send Logs</string>
     <string name="DebugClearLogs">Clear Logs</string>
@@ -1723,15 +1732,15 @@
     <string name="UseProxyTelegram">MTProto Proxy</string>
     <string name="UseProxyTelegramError">The proxy you are using is not configured correctly and will be disabled. Please find another one.</string>
     <string name="UseProxySponsor">Proxy sponsor</string>
-    <string name="UseProxySponsorInfo">This channel is shown by your proxy server. To remove this channel from your chat list, disable the proxy in Telegram Settings.</string>
+    <string name="UseProxySponsorInfo">This channel is shown by your proxy server. To remove this channel from your chat list, disable the proxy in Skintel Settings.</string>
     <string name="UseProxyInfo">SOCKS5 proxy settings.</string>
     <string name="UseProxyTelegramInfo">MTProto proxy settings.</string>
-    <string name="UseProxyTelegramInfo2">This proxy may display a sponsored channel in your chat list. This doesn\'t reveal any of your Telegram traffic.</string>
+    <string name="UseProxyTelegramInfo2">This proxy may display a sponsored channel in your chat list. This doesn\'t reveal any of your Skintel traffic.</string>
     <string name="UseProxyForCalls">Use proxy for calls</string>
     <string name="UseProxyForCallsInfo">Proxy servers may degrade the quality of your calls.</string>
     <string name="ConnectingToProxyEnable">Enable</string>
     <string name="LowDiskSpaceTitle">Attention</string>
-    <string name="LowDiskSpaceMessage">Your device is almost out of disk space. To free some space, you can set up Telegram to cache only recent media.</string>
+    <string name="LowDiskSpaceMessage">Your device is almost out of disk space. To free some space, you can set up Skintel to cache only recent media.</string>
     <string name="LowDiskSpaceTitle2">Remove media after</string>
     <string name="LowDiskSpaceNeverRemove">Never remove</string>
     <string name="AutodownloadContacts">Contacts</string>
@@ -1742,7 +1751,7 @@
     <string name="AutodownloadSizeLimitUpTo">up to %1$s</string>
     <string name="Streaming">Streaming</string>
     <string name="EnableStreaming">Stream Videos and Audio Files</string>
-    <string name="EnableAllStreamingInfo">Some videos can\'t be streamed – e.g., all videos that were sent from Android using Telegram 4.7 and earlier versions.\n</string>
+    <string name="EnableAllStreamingInfo">Some videos can\'t be streamed – e.g., all videos that were sent from Android using Skintel 4.7 and earlier versions.\n</string>
     <string name="TapToChangePhone">Tap to change phone number</string>
     <string name="Appearance">Appearance</string>
     <string name="StickersAndMasks">Stickers and Masks</string>
@@ -1794,12 +1803,12 @@
     <string name="AuthAnotherClientInfo1">Download Telegram on your computer from *desktop.telegram.org*.</string>
     <string name="AuthAnotherClientInfo2">Run Telegram Desktop to get the QR code.</string>
     <string name="AuthAnotherClientInfo3">Scan the QR code to connect your account.</string>
-    <string name="AuthAnotherClientUrl">This code can be used to allow someone to log in to your Telegram account.\n\nTo confirm Telegram login, please go to Settings &gt; Devices &gt; Scan QR and scan the code.</string>
+    <string name="AuthAnotherClientUrl">This code can be used to allow someone to log in to your Telegram account.\n\nTo confirm Skintel login, please go to Settings &gt; Devices &gt; Scan QR and scan the code.</string>
     <!--cache view-->
     <string name="LocalDatabase">Local Database</string>
     <string name="LocalDatabaseClearTextTitle">Clear local database</string>
     <string name="LocalDatabaseClearText">Are you sure you want to clear cached text messages?</string>
-    <string name="LocalDatabaseInfo">Clearing the local database will delete the texts of cached messages and compress the database to save internal disk space. Telegram needs some data to work, so database size will not reach zero.\n\nThis operation can take a few minutes to complete.</string>
+    <string name="LocalDatabaseInfo">Clearing the local database will delete the texts of cached messages and compress the database to save internal disk space. Skintel needs some data to work, so database size will not reach zero.\n\nThis operation can take a few minutes to complete.</string>
     <string name="ClearMediaCache">Clear Cache</string>
     <string name="CacheClear">Clear</string>
     <string name="CalculatingSize">Calculating...</string>
@@ -1812,7 +1821,7 @@
     <string name="LocalCache">Other files</string>
     <string name="CacheEmpty">Empty</string>
     <string name="KeepMedia">Keep Media</string>
-    <string name="KeepMediaInfo">Photos, videos and other files from cloud chats that you have **not accessed** during this period will be removed from this device to save disk space.\n\nAll media will stay in the Telegram cloud and can be re-downloaded if you need it again.</string>
+    <string name="KeepMediaInfo">Photos, videos and other files from cloud chats that you have **not accessed** during this period will be removed from this device to save disk space.\n\nAll media will stay in the Skintel cloud and can be re-downloaded if you need it again.</string>
     <string name="KeepMediaForever">Forever</string>
     <string name="AudioAutodownload">Voice messages</string>
     <string name="VideoMessagesAutodownload">Video messages</string>
@@ -2007,7 +2016,7 @@
     <string name="SessionsTitle">Active Sessions</string>
     <string name="CurrentSession">Current session</string>
     <string name="NoOtherSessions">No other active sessions</string>
-    <string name="NoOtherSessionsInfo">You can log in to Telegram from other mobile, tablet and desktop devices, using the same phone number. All your data will be instantly synchronized.</string>
+    <string name="NoOtherSessionsInfo">You can log in to Skintel from other mobile, tablet and desktop devices, using the same phone number. All your data will be instantly synchronized.</string>
     <string name="OtherSessions">Active sessions</string>
     <string name="SessionsInfo">Control your sessions on other devices.</string>
     <string name="TerminateSessionInfo">Tap on a session to terminate.</string>
@@ -2023,8 +2032,8 @@
     <string name="NoOtherWebSessions">No active logins.</string>
     <string name="NoOtherWebSessionsInfo">You can log in on websites that support signing in with Telegram.</string>
     <string name="OtherWebSessions">Connected websites</string>
-    <string name="WebSessionsTitle">Logged in with Telegram</string>
-    <string name="TerminateWebSessionInfo">Tap to disconnect from your Telegram account.</string>
+    <string name="WebSessionsTitle">Logged in with Skintel</string>
+    <string name="TerminateWebSessionInfo">Tap to disconnect from your Skintel account.</string>
     <string name="TerminateWebSessionText">Are you sure you want to disconnect %1$s?</string>
     <string name="TerminateWebSessionTitle">Disconnect website</string>
     <string name="TerminateWebSessionsTitle">Disconnect websites</string>
@@ -2038,7 +2047,7 @@
     <!--passcode view-->
     <string name="Passcode">Passcode Lock</string>
     <string name="ChangePasscode">Change Passcode</string>
-    <string name="ChangePasscodeInfo">When you set up an additional passcode, a lock icon will appear on the chats page. Tap it to lock and unlock your Telegram app.\n\nNote: if you forget the passcode, you\'ll need to delete and reinstall the app. All secret chats will be lost.</string>
+    <string name="ChangePasscodeInfo">When you set up an additional passcode, a lock icon will appear on the chats page. Tap it to lock and unlock your Skintel app.\n\nNote: if you forget the passcode, you\'ll need to delete and reinstall the app. All secret chats will be lost.</string>
     <string name="PasscodePIN">PIN</string>
     <string name="PasscodePassword">Password</string>
     <string name="EnterCurrentPasscode">Enter your current passcode</string>
@@ -2057,7 +2066,7 @@
     <string name="FingerprintNotRecognized">Fingerprint not recognized. Try again.</string>
     <string name="ScreenCapture">Show App Content in Task Switcher</string>
     <string name="ScreenCaptureInfo">If disabled, you won\'t be able to take screenshots in the app but chat content will be hidden in the task switcher.</string>
-    <string name="ScreenCaptureAlert">This will hide the contents of your chats or chat list from the task switcher, but you will not be able to take screenshots on Telegram.\n\nYou may need to restart the app for this to take effect.</string>
+    <string name="ScreenCaptureAlert">This will hide the contents of your chats or chat list from the task switcher, but you will not be able to take screenshots on Skintel.\n\nYou may need to restart the app for this to take effect.</string>
     <string name="TooManyTries">Too many tries.\nPlease try again in %1$s.</string>
     <!--media view-->
     <string name="January">January</string>
@@ -2339,8 +2348,8 @@
     <string name="PrivacyPhone">Phone Number</string>
     <string name="PrivacyPhoneTitle">Who can see my phone number?</string>
     <string name="PrivacyPhoneTitle2">Who can find me by my number?</string>
-    <string name="PrivacyPhoneInfo">Users who have your number saved in their contacts will also see it on Telegram.</string>
-    <string name="PrivacyPhoneInfo3">Users who add your number to their contacts will see it on Telegram only if they are your contacts.</string>
+    <string name="PrivacyPhoneInfo">Users who have your number saved in their contacts will also see it on Skintel.</string>
+    <string name="PrivacyPhoneInfo3">Users who add your number to their contacts will see it on Skintel only if they are your contacts.</string>
     <string name="PrivacyPhoneInfo2">You can add users or entire groups as exceptions that will override the settings above.</string>
     <string name="PrivacyForwards">Forwarded Messages</string>
     <string name="PrivacyForwardsEverybody">Link to your account</string>
@@ -2357,7 +2366,7 @@
     <string name="PrivacyPaymentsClear">Clear Payment and Shipping Info</string>
     <string name="PrivacyPaymentsClearAlertTitle">Clear payment info</string>
     <string name="PrivacyPaymentsClearAlertText">Are you sure you want to clear your payment and shipping info?</string>
-    <string name="PrivacyPaymentsClearAlert">Delete your shipping info and instruct all payment providers to remove your saved credit cards? Note that Telegram never stores your credit card data.</string>
+    <string name="PrivacyPaymentsClearAlert">Delete your shipping info and instruct all payment providers to remove your saved credit cards? Note that Skintel never stores your credit card data.</string>
     <string name="PrivacyBotsInfo">Websites where you used Telegram to log in.</string>
     <string name="PrivacyClearShipping">Shipping info</string>
     <string name="PrivacyClearPayment">Payment info</string>
@@ -2513,7 +2522,7 @@
     <string name="ActionBotDocumentRentalAgreement">Rental Agreement</string>
     <string name="ActionBotDocumentPhone">Phone Number</string>
     <string name="ActionBotDocumentEmail">Email Address</string>
-    <string name="UnsupportedMedia">This message is not supported on your version of Telegram. Update the app to view: https://telegram.org/update</string>
+    <string name="UnsupportedMedia">This message is not supported on your version of Skintel.</string>
     <string name="AttachPhoto">Photo</string>
     <string name="AttachVideo">Video</string>
     <string name="AttachDestructingPhoto">Self-Destructing Photo</string>
@@ -2547,8 +2556,8 @@
     <string name="DeleteAllMessagesAlert">Warning! This will **delete all messages** in this chat for **both** participants.</string>
     <string name="DeleteAll">Delete All</string>
     <string name="StopLoading">Stop loading?</string>
-    <string name="UpdateTelegram">Update Telegram</string>
-    <string name="UpdateAppAlert">Sorry, your Telegram app is out of date and can\'t handle this request. Please update Telegram.</string>
+    <string name="UpdateTelegram">Update Skintel</string>
+    <string name="UpdateAppAlert">Sorry, your Skintel app is out of date and can\'t handle this request. Please update Skintel.</string>
     <string name="InvalidPhoneNumber">Invalid phone number. Please check the number and try again.</string>
     <string name="PleaseLoginPassport">Please log in to your Telegram account to use Telegram Passport.</string>
     <string name="BannedPhoneNumber">This phone number is banned.</string>
@@ -2578,7 +2587,7 @@
     <string name="SendMessagesToText">Do you want to send this message to **%1$s**?</string>
     <string name="SendGameToText">Do you want to share this game to **%1$s**?</string>
     <string name="SendContactToText">Do you want to send this contact to **%1$s**?</string>
-    <string name="AreYouSureLogout">Are you sure you want to log out?\n\nNote that you can seamlessly use Telegram on all your devices at once.\n\nRemember, logging out kills all your Secret Chats.</string>
+    <string name="AreYouSureLogout">Are you sure you want to log out?\n\nNote that you can seamlessly use Skintel on all your devices at once.\n\nRemember, logging out kills all your Secret Chats.</string>
     <string name="DeleteFewChatsTitle">Delete %1$s</string>
     <string name="ClearFewChatsTitle">Clear %1$s</string>
     <string name="ClearCacheFewChatsTitle">Empty cache for %1$s</string>
@@ -2638,10 +2647,10 @@
     <string name="SecretLinkPreviewAlert">Would you like to enable extended link previews in Secret Chats? Note that link previews are generated on Telegram servers.</string>
     <string name="SecretChatContextBotAlert">Please note that inline bots are provided by third-party developers. For the bot to work, the symbols you type after the bot\'s username are sent to the respective developer.</string>
     <string name="EditMessageError">Sorry, you can\'t edit this message.</string>
-    <string name="AllowReadCall">Please allow Telegram to receive calls so that we can automatically enter your code for you.</string>
-    <string name="AllowReadCallAndLog">Please allow Telegram to receive calls and read the call log so that we can automatically enter your code for you.</string>
-    <string name="AllowReadCallLog">Please allow Telegram to read the call log so that we can automatically enter your code for you.</string>
-    <string name="AllowFillNumber">Please allow Telegram to receive calls so that we can automatically confirm your phone number.</string>
+    <string name="AllowReadCall">Please allow Skintel to receive calls so that we can automatically enter your code for you.</string>
+    <string name="AllowReadCallAndLog">Please allow Skintel to receive calls and read the call log so that we can automatically enter your code for you.</string>
+    <string name="AllowReadCallLog">Please allow Skintel to read the call log so that we can automatically enter your code for you.</string>
+    <string name="AllowFillNumber">Please allow Skintel to receive calls so that we can automatically confirm your phone number.</string>
     <string name="UserRestricted">Sorry, you are not allowed to do this.</string>
     <string name="YouBlockedUser">Sorry, you can\'t add this user or bot to groups because you\'ve blocked them. Please unblock to proceed.</string>
     <string name="JoinGroup">JOIN GROUP</string>
@@ -2654,36 +2663,36 @@
     <string name="ErrorSendRestrictedStickersAll">Sorry, sending stickers is not allowed in this group.</string>
     <string name="ErrorSendRestrictedMediaAll">Sorry, sending media is not allowed in this group.</string>
     <string name="ErrorSendRestrictedPollsAll">Sorry, sending polls is not allowed in this group.</string>
-    <string name="TosDecline">We\'re very sorry, but this means you can\'t sign up for Telegram.\n\nUnlike others, we don\'t use your data for ad targeting or other commercial purposes. Telegram only stores the information it needs to function as a feature-rich cloud service. You can adjust how we use your data (e.g., delete synced contacts) in Privacy &amp; Security settings.\n\nBut if you\'re generally not OK with Telegram\'s modest requirements, it won\'t be possible for us to provide you with this service.</string>
+    <string name="TosDecline">We\'re very sorry, but this means you can\'t sign up for Skintel.\n\nUnlike others, we don\'t use your data for ad targeting or other commercial purposes. Skintel only stores the information it needs to function as a feature-rich cloud service. You can adjust how we use your data (e.g., delete synced contacts) in Privacy &amp; Security settings.\n\nBut if you\'re generally not OK with Skintel\'s modest requirements, it won\'t be possible for us to provide you with this service.</string>
     <string name="TosAgeTitle">Age Verification</string>
     <string name="PrivacyPolicyAndTerms">Privacy Policy and Terms of Service</string>
     <string name="TosAgeText">Tap Agree to confirm that you are %1$s or over.</string>
-    <string name="TosUpdateDecline">We\'re very sorry, but this means we must part ways here. Unlike others, we don\'t use your data for ad targeting or other commercial purposes. Telegram only stores the information it needs to function as a feature-rich cloud service. You can adjust how we use your data (e.g., delete synced contacts) in Privacy &amp; Security settings.\n\nBut if you\'re generally not OK with Telegram\'s modest needs, it won\'t be possible for us to provide this service. You can deactivate your account now — or look around some more and deactivate it later if you feel you\'re not happy with the way we use your data.</string>
+    <string name="TosUpdateDecline">We\'re very sorry, but this means we must part ways here. Unlike others, we don\'t use your data for ad targeting or other commercial purposes. Skintel only stores the information it needs to function as a feature-rich cloud service. You can adjust how we use your data (e.g., delete synced contacts) in Privacy &amp; Security settings.\n\nBut if you\'re generally not OK with Skintel\'s modest needs, it won\'t be possible for us to provide this service. You can deactivate your account now — or look around some more and deactivate it later if you feel you\'re not happy with the way we use your data.</string>
     <string name="TosDeclineDeleteAccount">Warning, this will irreversibly delete your Telegram account along with all the data you store in the Telegram cloud.\n\nImportant: You can Cancel now and export your data before deleting your account instead of losing it all. (To do this, open the latest version of Telegram Desktop and go to Settings &gt; Export Telegram Data.)</string>
     <!--permissions-->
     <string name="PermissionContacts">To let you connect with friends across all your devices, your contacts will be continuously synced with Telegram\'s heavily encrypted cloud servers.</string>
-    <string name="PermissionStorage">Telegram needs storage access so you can send and save photos, videos, music and other media.</string>
-    <string name="PermissionNoAudio">Telegram needs access to your microphone so that you can send voice messages.</string>
-    <string name="PermissionNoAudioVideo">Telegram needs access to your microphone so that you can record videos.</string>
-    <string name="PermissionNoCamera">Telegram needs camera access so that you can take photos and videos. Please enable it in Settings.</string>
-    <string name="PermissionNoLocation">Telegram needs access to your location so that you can share it with your friends.</string>
-    <string name="PermissionNoLocationPosition">Telegram needs access to your location.</string>
-    <string name="PermissionDrawAboveOtherApps">Telegram needs access to draw above other apps to play videos in Picture-in-Picture mode.</string>
+    <string name="PermissionStorage">Skintel needs storage access so you can send and save photos, videos, music and other media.</string>
+    <string name="PermissionNoAudio">Skintel needs access to your microphone so that you can send voice messages.</string>
+    <string name="PermissionNoAudioVideo">Skintel needs access to your microphone so that you can record videos.</string>
+    <string name="PermissionNoCamera">Skintel needs camera access so that you can take photos and videos. Please enable it in Settings.</string>
+    <string name="PermissionNoLocation">Skintel needs access to your location so that you can share it with your friends.</string>
+    <string name="PermissionNoLocationPosition">Skintel needs access to your location.</string>
+    <string name="PermissionDrawAboveOtherApps">Skintel needs access to draw above other apps to play videos in Picture-in-Picture mode.</string>
     <string name="PermissionOpenSettings">SETTINGS</string>
-    <string name="PermissionXiaomiLockscreen">Please allow Telegram to be shown on the lock screen so that calls can work properly.</string>
+    <string name="PermissionXiaomiLockscreen">Please allow Skintel to be shown on the lock screen so that calls can work properly.</string>
     <!--Intro view-->
-    <string name="Page1Title">Telegram</string>
+    <string name="Page1Title">Skintel</string>
     <string name="Page2Title">Fast</string>
     <string name="Page3Title">Free</string>
     <string name="Page4Title">Secure</string>
     <string name="Page5Title">Powerful</string>
     <string name="Page6Title">Cloud-Based</string>
     <string name="Page1Message">The world\'s **fastest** messaging app.\nIt is **free** and **secure**.</string>
-    <string name="Page2Message">**Telegram** delivers messages faster than\nany other application.</string>
-    <string name="Page3Message">**Telegram** is free forever. No ads.\nNo subscription fees.</string>
-    <string name="Page4Message">**Telegram** keeps your messages safe\nfrom hacker attacks.</string>
-    <string name="Page5Message">**Telegram** has no limits on\nthe size of your media and chats.</string>
-    <string name="Page6Message">**Telegram** lets you access your messages\nfrom multiple devices.</string>
+    <string name="Page2Message">**Skintel** delivers messages faster than\nany other application.</string>
+    <string name="Page3Message">**Skintel** is free forever. No ads.\nNo subscription fees.</string>
+    <string name="Page4Message">**Skintel** keeps your messages safe\nfrom hacker attacks.</string>
+    <string name="Page5Message">**Skintel** has no limits on\nthe size of your media and chats.</string>
+    <string name="Page6Message">**Skintel** lets you access your messages\nfrom multiple devices.</string>
     <string name="StartMessaging">Start Messaging</string>
     <!-- VoIP -->
     <string name="AccountSettings">Account Settings</string>
@@ -2733,7 +2742,7 @@
     <string name="VoipPeerIncompatible">**%1$s**\'s app is using an incompatible protocol. They need to update their app before you can call them.</string>
     <string name="VoipPeerOutdated">**%1$s**\'s app does not support calls. They need to update their app before you can call them.</string>
     <string name="VoipRateCallAlert">Please rate the quality of your Telegram call</string>
-    <string name="VoipNeedMicPermission">Telegram needs access to your microphone so that you can make calls.</string>
+    <string name="VoipNeedMicPermission">Skintel needs access to your microphone so that you can make calls.</string>
     <string name="VoipFeedbackCommentHint">Add an optional comment</string>
     <string name="CallBack">Call Back</string>
     <string name="CallAgain">Call Again</string>
@@ -2753,7 +2762,7 @@
     <string name="CallReportSent">Thank you for helping make Telegram calls better.</string>
     <string name="VoipAnsweringAsAccount">answering as %s</string>
     <string name="VoipQuickReplies">Respond with Text</string>
-    <string name="VoipQuickRepliesExplain">These quick responses will be available when you respond to an incoming call with a Telegram message. Change them to say anything you like.</string>
+    <string name="VoipQuickRepliesExplain">These quick responses will be available when you respond to an incoming call with a Skintel message. Change them to say anything you like.</string>
     <string name="QuickReplyDefault1">Can\'t talk now. What\'s up?</string>
     <string name="QuickReplyDefault2">I\'ll call you right back.</string>
     <string name="QuickReplyDefault3">I\'ll call you later.</string>
@@ -2870,7 +2879,7 @@
     <string name="WalletChangePasscode">Change Passcode</string>
     <string name="WalletDeleteTitle">Delete wallet</string>
     <string name="WalletKeystoreInvalidated">Unfortunately, your wallet is no longer available because of a change in your device\'s lockscreen parameters. Please use your secret words to restore the wallet.</string>
-    <string name="WalletPermissionNoCamera">Telegram needs access to your camera so that you can scan QR codes.</string>
+    <string name="WalletPermissionNoCamera">Skintel needs access to your camera so that you can scan QR codes.</string>
     <string name="WalletSecurityAlertTitle">Security</string>
     <string name="WalletSecurityAlertTextBiometric">For better security, we recommend you to set up lockscreen biometric authentication.</string>
     <string name="WalletSecurityAlertTextLockscreenBiometric">For better security, we recommend you to set up a lockscreen password and biometric authentication.</string>

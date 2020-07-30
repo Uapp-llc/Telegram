@@ -41,6 +41,7 @@ public class GcmPushListenerService extends FirebaseMessagingService {
         final long receiveTime = SystemClock.elapsedRealtime();
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d("GCM received data: " + data + " from: " + from);
+            FileLog.d("GCM NEW MESSAGE !!!!!!!!!!" + data + " from: " + from);
         }
         AndroidUtilities.runOnUIThread(() -> {
             ApplicationLoader.postInitApplication();

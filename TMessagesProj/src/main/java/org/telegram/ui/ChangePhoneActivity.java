@@ -729,7 +729,7 @@ public class ChangePhoneActivity extends BaseFragment {
                             AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
                             builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
                             builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
-                            builder.setMessage(LocaleController.getString("AllowReadCall", R.string.AllowReadCall));
+                            builder.setMessage(LocaleController.getString("AllowReadCall", R.string.AllowReadCall, true));
                             permissionsDialog = showDialog(builder.create());
                         } else {
                             getParentActivity().requestPermissions(permissionsItems.toArray(new String[0]), 6);

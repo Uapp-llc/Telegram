@@ -2408,7 +2408,9 @@ public class MediaDataController extends BaseController {
                                 did = -hint.peer.channel_id;
                             }
                         }
-                        newShortcutsIds.add("did" + did);
+                        if(!getMessagesController().isDialogLocked(did)){
+                            newShortcutsIds.add("did" + did);
+                        }
                     }
                     for (int a = 0; a < currentShortcuts.size(); a++) {
                         String id = currentShortcuts.get(a).getId();
@@ -2448,12 +2450,13 @@ public class MediaDataController extends BaseController {
 
                     TLRPC.User user = null;
                     TLRPC.Chat chat = null;
-                    long did;
-                    if (hint.peer.user_id != 0) {
+                    long did = -1;
+                    if (hint.peer.user_id != 0 && !getMessagesController().isDialogLocked(hint.peer.user_id)) {
                         shortcutIntent.putExtra("userId", hint.peer.user_id);
                         user = getMessagesController().getUser(hint.peer.user_id);
                         did = hint.peer.user_id;
-                    } else {
+                    } else if(!getMessagesController().isDialogLocked(-hint.peer.chat_id)
+                            && !getMessagesController().isDialogLocked(-hint.peer.channel_id)){
                         int chat_id = hint.peer.chat_id;
                         if (chat_id == 0) {
                             chat_id = hint.peer.channel_id;
@@ -2462,7 +2465,7 @@ public class MediaDataController extends BaseController {
                         shortcutIntent.putExtra("chatId", chat_id);
                         did = -chat_id;
                     }
-                    if ((user == null || UserObject.isDeleted(user)) && chat == null) {
+                    if (did == -1 || (user == null || UserObject.isDeleted(user)) && chat == null) {
                         continue;
                     }
 
@@ -2546,13 +2549,18 @@ public class MediaDataController extends BaseController {
     }
 
     public void loadHints(boolean cache) {
-        if (loading || !getUserConfig().suggestContacts) {
+        loadHints(cache, false);
+    }
+
+    public void loadHints(boolean cache, boolean force) {
+        if (!force && (loading || !getUserConfig().suggestContacts)) {
             return;
         }
         if (cache) {
-            if (loaded) {
+            if (loaded && !force) {
                 return;
             }
+            hints.clear();
             loading = true;
             getMessagesStorage().getStorageQueue().postRunnable(() -> {
                 final ArrayList<TLRPC.TL_topPeer> hintsNew = new ArrayList<>();
@@ -2572,19 +2580,21 @@ public class MediaDataController extends BaseController {
                         int type = cursor.intValue(1);
                         TLRPC.TL_topPeer peer = new TLRPC.TL_topPeer();
                         peer.rating = cursor.doubleValue(2);
-                        if (did > 0) {
-                            peer.peer = new TLRPC.TL_peerUser();
-                            peer.peer.user_id = did;
-                            usersToLoad.add(did);
-                        } else {
-                            peer.peer = new TLRPC.TL_peerChat();
-                            peer.peer.chat_id = -did;
-                            chatsToLoad.add(-did);
-                        }
-                        if (type == 0) {
-                            hintsNew.add(peer);
-                        } else if (type == 1) {
-                            inlineBotsNew.add(peer);
+                        if(!getMessagesController().isDialogHidden(did)){
+                            if (did > 0) {
+                                peer.peer = new TLRPC.TL_peerUser();
+                                peer.peer.user_id = did;
+                                usersToLoad.add(did);
+                            } else {
+                                peer.peer = new TLRPC.TL_peerChat();
+                                peer.peer.chat_id = -did;
+                                chatsToLoad.add(-did);
+                            }
+                            if (type == 0) {
+                                hintsNew.add(peer);
+                            } else if (type == 1) {
+                                inlineBotsNew.add(peer);
+                            }
                         }
                     }
                     cursor.dispose();
@@ -2606,7 +2616,7 @@ public class MediaDataController extends BaseController {
                         getNotificationCenter().postNotificationName(NotificationCenter.reloadHints);
                         getNotificationCenter().postNotificationName(NotificationCenter.reloadInlineHints);
                         if (Math.abs(getUserConfig().lastHintsSyncTime - (int) (System.currentTimeMillis() / 1000)) >= 24 * 60 * 60) {
-                            loadHints(false);
+                            loadHints(false, force);
                         }
                     });
                 } catch (Exception e) {
@@ -2615,6 +2625,7 @@ public class MediaDataController extends BaseController {
             });
             loaded = true;
         } else {
+            hints.clear();
             loading = true;
             TLRPC.TL_contacts_getTopPeers req = new TLRPC.TL_contacts_getTopPeers();
             req.hash = 0;
@@ -2641,7 +2652,7 @@ public class MediaDataController extends BaseController {
                                 int selfUserId = getUserConfig().getClientUserId();
                                 for (int b = 0; b < hints.size(); b++) {
                                     TLRPC.TL_topPeer topPeer = hints.get(b);
-                                    if (topPeer.peer.user_id == selfUserId) {
+                                    if (topPeer.peer.user_id == selfUserId || getMessagesController().isDialogHidden(topPeer.peer.user_id)) {
                                         hints.remove(b);
                                         break;
                                     }
@@ -2677,6 +2688,9 @@ public class MediaDataController extends BaseController {
                                             did = -peer.peer.chat_id;
                                         } else {
                                             did = -peer.peer.channel_id;
+                                        }
+                                        if(getMessagesController().isDialogHidden(did)){
+                                            continue;
                                         }
                                         state.requery();
                                         state.bindInteger(1, did);
@@ -3004,7 +3018,7 @@ public class MediaDataController extends BaseController {
                             canvas.drawRoundRect(bitmapRect, bitmap.getWidth(), bitmap.getHeight(), roundPaint);
                             canvas.restore();
                         }
-                        Drawable drawable = ApplicationLoader.applicationContext.getResources().getDrawable(R.drawable.book_logo);
+                        Drawable drawable = ApplicationLoader.applicationContext.getResources().getDrawable(R.drawable.ic_skintel);
                         int w = AndroidUtilities.dp(15);
                         int left = size - w - AndroidUtilities.dp(2);
                         int top = size - w - AndroidUtilities.dp(2);
@@ -3079,13 +3093,16 @@ public class MediaDataController extends BaseController {
         }
     }
 
-    public void uninstallShortcut(long did) {
+    public void uninstallShortcut(long did, boolean disable) {
         try {
             if (Build.VERSION.SDK_INT >= 26) {
                 ShortcutManager shortcutManager = ApplicationLoader.applicationContext.getSystemService(ShortcutManager.class);
                 ArrayList<String> arrayList = new ArrayList<>();
                 arrayList.add("sdid_" + did);
                 shortcutManager.removeDynamicShortcuts(arrayList);
+                if(disable){
+                    shortcutManager.disableShortcuts(arrayList);
+                }
             } else {
                 int lower_id = (int) did;
                 int high_id = (int) (did >> 32);

@@ -317,9 +317,9 @@ public class TwoStepVerificationActivity extends BaseFragment implements Notific
                                 } else {
                                     timeString = LocaleController.formatPluralString("Minutes", time / 60);
                                 }
-                                showAlertWithText(LocaleController.getString("AppName", R.string.AppName), LocaleController.formatString("FloodWaitTime", R.string.FloodWaitTime, timeString));
+                                showAlertWithText(getParentActivity().getString(R.string.AppName), LocaleController.formatString("FloodWaitTime", R.string.FloodWaitTime, timeString));
                             } else {
-                                showAlertWithText(LocaleController.getString("AppName", R.string.AppName), error.text);
+                                showAlertWithText(getParentActivity().getString(R.string.AppName), error.text);
                             }
                         }
                     }), ConnectionsManager.RequestFlagFailOnServerErrors | ConnectionsManager.RequestFlagWithoutLogin);
@@ -417,7 +417,7 @@ public class TwoStepVerificationActivity extends BaseFragment implements Notific
                     });
                     AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
                     builder.setMessage(LocaleController.getString("ResendCodeInfo", R.string.ResendCodeInfo));
-                    builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                    builder.setTitle(getParentActivity().getString(R.string.AppName));
                     builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
                     showDialog(builder.create());
                 }
@@ -1037,7 +1037,7 @@ public class TwoStepVerificationActivity extends BaseFragment implements Notific
                         }
                     } else {
                         if ("EMAIL_INVALID".equals(error.text)) {
-                            showAlertWithText(LocaleController.getString("AppName", R.string.AppName), LocaleController.getString("PasswordEmailInvalid", R.string.PasswordEmailInvalid));
+                            showAlertWithText(getParentActivity().getString(R.string.AppName), LocaleController.getString("PasswordEmailInvalid", R.string.PasswordEmailInvalid));
                         } else if (error.text.startsWith("FLOOD_WAIT")) {
                             int time = Utilities.parseInt(error.text);
                             String timeString;
@@ -1046,9 +1046,9 @@ public class TwoStepVerificationActivity extends BaseFragment implements Notific
                             } else {
                                 timeString = LocaleController.formatPluralString("Minutes", time / 60);
                             }
-                            showAlertWithText(LocaleController.getString("AppName", R.string.AppName), LocaleController.formatString("FloodWaitTime", R.string.FloodWaitTime, timeString));
+                            showAlertWithText(getParentActivity().getString(R.string.AppName), LocaleController.formatString("FloodWaitTime", R.string.FloodWaitTime, timeString));
                         } else {
-                            showAlertWithText(LocaleController.getString("AppName", R.string.AppName), error.text);
+                            showAlertWithText(getParentActivity().getString(R.string.AppName), error.text);
                         }
                     }
                 }
@@ -1225,9 +1225,9 @@ public class TwoStepVerificationActivity extends BaseFragment implements Notific
                                     } else {
                                         timeString = LocaleController.formatPluralString("Minutes", time / 60);
                                     }
-                                    showAlertWithText(LocaleController.getString("AppName", R.string.AppName), LocaleController.formatString("FloodWaitTime", R.string.FloodWaitTime, timeString));
+                                    showAlertWithText(getParentActivity().getString(R.string.AppName), LocaleController.formatString("FloodWaitTime", R.string.FloodWaitTime, timeString));
                                 } else {
-                                    showAlertWithText(LocaleController.getString("AppName", R.string.AppName), error.text);
+                                    showAlertWithText(getParentActivity().getString(R.string.AppName), error.text);
                                 }
                             });
                         }
@@ -1317,7 +1317,7 @@ public class TwoStepVerificationActivity extends BaseFragment implements Notific
                             finishFragment();
                         });
                         builder.setMessage(LocaleController.getString("PasswordReset", R.string.PasswordReset));
-                        builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                        builder.setTitle(getParentActivity().getString(R.string.AppName));
                         Dialog dialog = showDialog(builder.create());
                         if (dialog != null) {
                             dialog.setCanceledOnTouchOutside(false);
@@ -1334,9 +1334,9 @@ public class TwoStepVerificationActivity extends BaseFragment implements Notific
                             } else {
                                 timeString = LocaleController.formatPluralString("Minutes", time / 60);
                             }
-                            showAlertWithText(LocaleController.getString("AppName", R.string.AppName), LocaleController.formatString("FloodWaitTime", R.string.FloodWaitTime, timeString));
+                            showAlertWithText(getParentActivity().getString(R.string.AppName), LocaleController.formatString("FloodWaitTime", R.string.FloodWaitTime, timeString));
                         } else {
-                            showAlertWithText(LocaleController.getString("AppName", R.string.AppName), error.text);
+                            showAlertWithText(getParentActivity().getString(R.string.AppName), error.text);
                         }
                     }
                 }), ConnectionsManager.RequestFlagFailOnServerErrors | ConnectionsManager.RequestFlagWithoutLogin);
@@ -1391,9 +1391,9 @@ public class TwoStepVerificationActivity extends BaseFragment implements Notific
                     } else {
                         timeString = LocaleController.formatPluralString("Minutes", time / 60);
                     }
-                    showAlertWithText(LocaleController.getString("AppName", R.string.AppName), LocaleController.formatString("FloodWaitTime", R.string.FloodWaitTime, timeString));
+                    showAlertWithText(getParentActivity().getString(R.string.AppName), LocaleController.formatString("FloodWaitTime", R.string.FloodWaitTime, timeString));
                 } else {
-                    showAlertWithText(LocaleController.getString("AppName", R.string.AppName), error.text);
+                    showAlertWithText(getParentActivity().getString(R.string.AppName), error.text);
                 }
             }
         }), ConnectionsManager.RequestFlagFailOnServerErrors | ConnectionsManager.RequestFlagWithoutLogin);

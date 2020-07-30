@@ -22,9 +22,9 @@ public class BuildVars {
     public static int BUILD_VERSION = 1869;
     public static String BUILD_VERSION_STRING = "5.15.0";
     public static int APP_ID = 1384870;
-    public static String APP_HASH = "93b80d4b480df02eac605cb3ee9fb488";
-    public static String HOCKEY_APP_HASH = "a5b5c4f551dadedc9918d9766a22ca7c";
-    public static String HOCKEY_APP_HASH_DEBUG = "f972660267c948d2b5d04761f1c1a8f3";
+    public static String APP_HASH = "";
+    public static String HOCKEY_APP_HASH = "";
+    public static String HOCKEY_APP_HASH_DEBUG = "";
     public static String SMS_HASH = DEBUG_VERSION ? "O2P2z+/jBpJ" : "oLeq9AcOZkT";
     public static String PLAYSTORE_APP_URL = "";
 

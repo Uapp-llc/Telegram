@@ -28,6 +28,7 @@ import android.widget.Toast;
 import androidx.core.app.NotificationManagerCompat;
 
 import org.telegram.SQLite.SQLiteCursor;
+import org.telegram.localStorage.LockDialog;
 import org.telegram.localStorage.StorageRepository;
 import org.telegram.messenger.support.SparseLongArray;
 import org.telegram.messenger.voip.VoIPService;
@@ -43,6 +44,7 @@ import org.telegram.ui.ChatActivity;
 import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.Category;
 import org.telegram.ui.Components.StoredCategory;
+import org.telegram.ui.DialogPrivacySettingsActivity;
 import org.telegram.ui.DialogsActivity;
 import org.telegram.ui.ProfileActivity;
 
@@ -57,11 +59,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
-import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.observers.DisposableObserver;
 import io.reactivex.schedulers.Schedulers;
 
 public class MessagesController extends BaseController implements NotificationCenter.NotificationCenterDelegate {
@@ -97,7 +96,9 @@ public class MessagesController extends BaseController implements NotificationCe
     public ArrayList<TLRPC.Dialog> unchosenDialogsByCategory = new ArrayList<>();
     public ArrayList<TLRPC.Dialog> dialogsWithCategories = new ArrayList<>();
     public ArrayList<TLRPC.Dialog> dialogsForwardWithCategories = new ArrayList<>();
-    public boolean isUpdatingCategories = false;
+    public LongSparseArray<LockDialog> lockedDialogs_dict = new LongSparseArray<>();
+    public List<LockDialog> lockedDialogs = new ArrayList<>();
+    public ArrayList<TLRPC.Dialog> dialogsWithCategoriesPinnedList = new ArrayList<>();
 
     public int unreadUnmutedDialogs;
     public ConcurrentHashMap<Long, Integer> dialogs_read_inbox_max = new ConcurrentHashMap<>(100, 1.0f, 2);
@@ -244,6 +245,8 @@ public class MessagesController extends BaseController implements NotificationCe
 
     private boolean loadingAppConfig;
 
+    private int lastPinnedNum;
+
     public boolean enableJoined;
     public String linkPrefix;
     public int maxGroupCount;
@@ -314,6 +317,8 @@ public class MessagesController extends BaseController implements NotificationCe
     public static final int UPDATE_MASK_MESSAGE_TEXT = 32768;
     public static final int UPDATE_MASK_CHECK = 65536;
     public static final int UPDATE_MASK_REORDER = 131072;
+    public static final int UPDATE_MASK_CATEGORY = 262144;
+    public static final int UPDATE_MASK_LOCK = 524288;
     public static final int UPDATE_MASK_ALL = UPDATE_MASK_AVATAR | UPDATE_MASK_STATUS | UPDATE_MASK_NAME | UPDATE_MASK_CHAT_AVATAR | UPDATE_MASK_CHAT_NAME | UPDATE_MASK_CHAT_MEMBERS | UPDATE_MASK_USER_PRINT | UPDATE_MASK_USER_PHONE | UPDATE_MASK_READ_DIALOG_MESSAGE | UPDATE_MASK_PHONE;
 
     private class ReadTask {
@@ -347,6 +352,7 @@ public class MessagesController extends BaseController implements NotificationCe
                 return 0;
             }
         }
+
         final MediaDataController mediaDataController = getMediaDataController();
         final long date1 = DialogObject.getLastMessageOrDraftDate(dialog1, mediaDataController.getDraft(dialog1.id));
         final long date2 = DialogObject.getLastMessageOrDraftDate(dialog2, mediaDataController.getDraft(dialog2.id));
@@ -356,6 +362,22 @@ public class MessagesController extends BaseController implements NotificationCe
             return -1;
         }
         return 0;
+    };
+
+    private final Comparator<TLRPC.Dialog> dialogCategoryComparator = (d1, d2) -> {
+        if (d1 instanceof TLRPC.TL_dialogFolder && !(d2 instanceof TLRPC.TL_dialogFolder)) {
+            return -1;
+        } else if (!(d1 instanceof TLRPC.TL_dialogFolder) && d2 instanceof TLRPC.TL_dialogFolder) {
+            return 1;
+        } else if (d1.pinnedNum < d2.pinnedNum) {
+            setLastPinnedNum(Math.max(lastPinnedNum, d2.pinnedNum));
+            return 1;
+        } else if (d1.pinnedNum > d2.pinnedNum) {
+            setLastPinnedNum(Math.max(lastPinnedNum, d1.pinnedNum));
+            return -1;
+        } else {
+            return 0;
+        }
     };
 
     private final Comparator<TLRPC.Update> updatesComparator = (lhs, rhs) -> {
@@ -432,7 +454,6 @@ public class MessagesController extends BaseController implements NotificationCe
             getNotificationCenter().addObserver(messagesController, NotificationCenter.fileDidFailToLoad);
             getNotificationCenter().addObserver(messagesController, NotificationCenter.messageReceivedByServer);
             getNotificationCenter().addObserver(messagesController, NotificationCenter.updateMessageMedia);
-            getNotificationCenter().addObserver(messagesController, NotificationCenter.refreshCategories);
         });
         addSupportUser();
         if (currentAccount == 0) {
@@ -472,8 +493,8 @@ public class MessagesController extends BaseController implements NotificationCe
         canRevokePmInbox = mainPreferences.getBoolean("canRevokePmInbox", canRevokePmInbox);
         preloadFeaturedStickers = mainPreferences.getBoolean("preloadFeaturedStickers", false);
         youtubePipType = mainPreferences.getString("youtubePipType", "disabled");
-        keepAliveService = mainPreferences.getBoolean("keepAliveService", false);
-        backgroundConnection = mainPreferences.getBoolean("keepAliveService", false);
+        keepAliveService = mainPreferences.getBoolean("keepAliveService", true);
+        backgroundConnection = mainPreferences.getBoolean("backgroundConnection", true);
         proxyDialogId = mainPreferences.getLong("proxy_dialog", 0);
         proxyDialogAddress = mainPreferences.getString("proxyDialogAddress", null);
         nextTosCheckTime = notificationsPreferences.getInt("nextTosCheckTime", 0);
@@ -486,6 +507,7 @@ public class MessagesController extends BaseController implements NotificationCe
         suggestedLangCode = mainPreferences.getString("suggestedLangCode", "en");
         animatedEmojisZoom = mainPreferences.getFloat("animatedEmojisZoom", 0.625f);
         qrLoginCamera = mainPreferences.getBoolean("qrLoginCamera", false);
+        lastPinnedNum = mainPreferences.getInt("lastPinnedNum_" + currentAccount, 0);
     }
 
     private void loadAppConfig() {
@@ -537,7 +559,6 @@ public class MessagesController extends BaseController implements NotificationCe
                                 keepAliveService = bool.value;
                                 editor.putBoolean("keepAliveService", keepAliveService);
                                 changed = true;
-                                keelAliveChanged = true;
                             }
                         }
                     } else if ("qr_login_camera".equals(value.key)) {
@@ -1110,8 +1131,6 @@ public class MessagesController extends BaseController implements NotificationCe
                     getNotificationCenter().postNotificationName(NotificationCenter.notificationsSettingsUpdated);
                 }
             }
-        } else if(id == NotificationCenter.refreshCategories){
-            reloadDialogsWithCategories();
         }
     }
 
@@ -1177,11 +1196,15 @@ public class MessagesController extends BaseController implements NotificationCe
         clearingHistoryDialogs.clear();
         lastPrintingStringCount = 0;
 
+        dialogsWithCategories.clear();
         categoriesAll.clear();
+
         categories_dict.clear();
-        chosenDialogsByCategory.clear();
-        unchosenDialogsByCategory.clear();
         dialogsForwardWithCategories.clear();
+        chosenDialogsByCategory.clear();
+        dialogsForwardByCategory.clear();
+        unchosenDialogsByCategory.clear();
+        dialogsWithCategoriesPinnedList.clear();
 
         Utilities.stageQueue.postRunnable(() -> {
             readTasks.clear();
@@ -2981,7 +3004,20 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public ArrayList<TLRPC.Dialog> getDialogs(int folderId) {
-        ArrayList<TLRPC.Dialog> dialogs = dialogsByFolder.get(folderId);
+        return getDialogs(folderId, false);
+    }
+
+    public ArrayList<TLRPC.Dialog> getDialogs(int folderId, boolean includingPinned) {
+        ArrayList<TLRPC.Dialog> dialogs;
+        if (folderId == 0 && !dialogsWithCategories.isEmpty()) {
+            if (includingPinned) {
+                dialogs = dialogsWithCategoriesPinnedList;
+            } else {
+                dialogs = dialogsWithCategories;
+            }
+        } else {
+            dialogs = dialogsByFolder.get(folderId);
+        }
         if (dialogs == null) {
             return new ArrayList<>();
         }
@@ -3074,7 +3110,7 @@ public class MessagesController extends BaseController implements NotificationCe
             return;
         }
         if (onlyHistory == 0 || onlyHistory == 3) {
-            getMediaDataController().uninstallShortcut(did);
+            getMediaDataController().uninstallShortcut(did, false);
         }
         int lower_part = (int) did;
         int high_id = (int) (did >> 32);
@@ -4550,9 +4586,10 @@ public class MessagesController extends BaseController implements NotificationCe
         dialogFolder.pinned = true;
 
         int maxPinnedNum = 0;
-        for (int a = 0; a < allDialogs.size(); a++) {
-            TLRPC.Dialog d = allDialogs.get(a);
-            if (!d.pinned) {
+        ArrayList<TLRPC.Dialog> dialogsList = getDialogs(0, true);
+        for (int a = 0; a < dialogsList.size(); a++) {
+            TLRPC.Dialog d = dialogsList.get(a);
+            if (!d.pinned && !(d instanceof Category)) {
                 if (d.id != proxyDialogId) {
                     break;
                 }
@@ -4745,6 +4782,9 @@ public class MessagesController extends BaseController implements NotificationCe
                 ArrayList<TLRPC.Dialog> dialogs = getDialogs(folderId);
                 for (int a = dialogs.size() - 1; a >= 0; a--) {
                     TLRPC.Dialog dialog = dialogs.get(a);
+                    if (dialog instanceof Category) {
+                        continue;
+                    }
                     if (dialog.pinned) {
                         continue;
                     }
@@ -5833,6 +5873,7 @@ public class MessagesController extends BaseController implements NotificationCe
         }
         int currentValue = notificationsPreferences.getInt("notify2_" + dialog_id, -1);
         int currentValue2 = notificationsPreferences.getInt("notifyuntil_" + dialog_id, 0);
+        boolean isInCategory = isDialogInCategory(dialog_id);
         SharedPreferences.Editor editor = notificationsPreferences.edit();
         boolean updated = false;
         TLRPC.Dialog dialog = dialogs_dict.get(dialog_id);
@@ -5866,8 +5907,10 @@ public class MessagesController extends BaseController implements NotificationCe
                     }
                     until = notify_settings.mute_until;
                 }
-                getMessagesStorage().setDialogFlags(dialog_id, ((long) until << 32) | 1);
-                getNotificationsController().removeNotificationsForDialog(dialog_id);
+                if (!isInCategory) {
+                    getMessagesStorage().setDialogFlags(dialog_id, ((long) until << 32) | 1);
+                    getNotificationsController().removeNotificationsForDialog(dialog_id);
+                }
             } else {
                 if (currentValue != 0 && currentValue != 1) {
                     updated = true;
@@ -5876,7 +5919,9 @@ public class MessagesController extends BaseController implements NotificationCe
                     }
                     editor.putInt("notify2_" + dialog_id, 0);
                 }
-                getMessagesStorage().setDialogFlags(dialog_id, 0);
+                if (!isInCategory) {
+                    getMessagesStorage().setDialogFlags(dialog_id, 0);
+                }
             }
         } else {
             if (currentValue != -1) {
@@ -5886,7 +5931,9 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
                 editor.remove("notify2_" + dialog_id);
             }
-            getMessagesStorage().setDialogFlags(dialog_id, 0);
+            if (!isInCategory) {
+                getMessagesStorage().setDialogFlags(dialog_id, 0);
+            }
         }
         editor.commit();
         if (updated) {
@@ -6607,7 +6654,6 @@ public class MessagesController extends BaseController implements NotificationCe
                         dialog.unread_mark = false;
                         getMessagesStorage().setDialogUnread(dialog.id, false);
                     }
-                    getNotificationCenter().postNotificationName(NotificationCenter.refreshCategories);
                     getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, UPDATE_MASK_READ_DIALOG_MESSAGE);
                 }
                 if (!popup) {
@@ -6671,7 +6717,6 @@ public class MessagesController extends BaseController implements NotificationCe
                         dialog.unread_mark = false;
                         getMessagesStorage().setDialogUnread(dialog.id, false);
                     }
-                    getNotificationCenter().postNotificationName(NotificationCenter.refreshCategories);
                     getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, UPDATE_MASK_READ_DIALOG_MESSAGE);
                 }
                 LongSparseArray<Integer> dialogsToUpdate = new LongSparseArray<>(1);
@@ -8230,7 +8275,7 @@ public class MessagesController extends BaseController implements NotificationCe
 
         final long newTaskId;
         if (taskId == 0) {
-            ArrayList<TLRPC.Dialog> dialogs = getDialogs(folderId);
+            ArrayList<TLRPC.Dialog> dialogs = getDialogs(folderId, true);
             if (dialogs.isEmpty()) {
                 return;
             }
@@ -8238,7 +8283,7 @@ public class MessagesController extends BaseController implements NotificationCe
             int size = 0;
             for (int a = 0, N = dialogs.size(); a < N; a++) {
                 TLRPC.Dialog dialog = dialogs.get(a);
-                if (!(dialog instanceof TLRPC.Dialog)) {
+                if (dialog instanceof TLRPC.TL_dialogFolder || dialog instanceof Category) {
                     continue;
                 }
                 if (!dialog.pinned) {
@@ -8274,7 +8319,6 @@ public class MessagesController extends BaseController implements NotificationCe
             req.order = order;
             newTaskId = taskId;
         }
-
         getConnectionsManager().sendRequest(req, (response, error) -> {
             if (newTaskId != 0) {
                 getMessagesStorage().removePendingTask(newTaskId);
@@ -8289,24 +8333,10 @@ public class MessagesController extends BaseController implements NotificationCe
             return dialog != null;
         }
         int folderId = dialog.folder_id;
-        ArrayList<TLRPC.Dialog> dialogs = getDialogs(folderId);
+        ArrayList<TLRPC.Dialog> dialogs = dialogsByFolder.get(folderId);
         dialog.pinned = pin;
         if (pin) {
-            int maxPinnedNum = 0;
-            for (int a = 0; a < dialogs.size(); a++) {
-                TLRPC.Dialog d = dialogs.get(a);
-                if (!(dialog instanceof TLRPC.Dialog)) {
-                    continue;
-                }
-                if (!d.pinned) {
-                    if (d.id != proxyDialogId) {
-                        break;
-                    }
-                    continue;
-                }
-                maxPinnedNum = Math.max(d.pinnedNum, maxPinnedNum);
-            }
-            dialog.pinnedNum = maxPinnedNum + 1;
+            dialog.pinnedNum = getLastPinnedNum();
         } else {
             dialog.pinnedNum = 0;
         }
@@ -8368,6 +8398,7 @@ public class MessagesController extends BaseController implements NotificationCe
             if (response != null) {
                 final TLRPC.TL_messages_peerDialogs res = (TLRPC.TL_messages_peerDialogs) response;
                 ArrayList<TLRPC.Dialog> newPinnedDialogs = new ArrayList<>(res.dialogs);
+
                 fetchFolderInLoadedPinnedDialogs(res);
                 final TLRPC.TL_messages_dialogs toCache = new TLRPC.TL_messages_dialogs();
                 toCache.users.addAll(res.users);
@@ -8447,12 +8478,33 @@ public class MessagesController extends BaseController implements NotificationCe
                     boolean added = false;
                     int maxPinnedNum = 0;
 
-                    ArrayList<TLRPC.Dialog> dialogs = getDialogs(folderId);
+                    ArrayList<TLRPC.Dialog> dialogs = getDialogs(folderId, true);
 
                     int pinnedNum = firstIsFolder ? 1 : 0;
+                    int newlyPins = 0;
+                    for (int a = 0; a < newPinnedDialogs.size(); a++) {
+                        long did = newPinnedDialogs.get(a).id;
+                        TLRPC.Dialog dialog = dialogs_dict.get(did);
+                        if (dialog != null && !dialog.pinned) {
+                            newlyPins++;
+                        } else {
+                            break;
+                        }
+                    }
+                    int insertIndex = pinnedNum + newlyPins;
                     for (int a = 0; a < dialogs.size(); a++) {
                         TLRPC.Dialog dialog = dialogs.get(a);
-                        if (!(dialog instanceof TLRPC.Dialog)) {
+                        if (dialog instanceof TLRPC.TL_dialogFolder) {
+                            continue;
+                        }
+                        if (dialog instanceof Category) {
+                            if (insertIndex < newPinnedDialogs.size()) {
+                                newPinnedDialogs.add(insertIndex, dialog);
+                            } else {
+                                newPinnedDialogs.add(dialog);
+                            }
+                            pinnedNum++;
+                            insertIndex++;
                             continue;
                         }
                         if ((int) dialog.id == 0) {
@@ -8462,6 +8514,7 @@ public class MessagesController extends BaseController implements NotificationCe
                                 newPinnedDialogs.add(dialog);
                             }
                             pinnedNum++;
+                            insertIndex++;
                             continue;
                         }
                         if (!dialog.pinned) {
@@ -8469,41 +8522,56 @@ public class MessagesController extends BaseController implements NotificationCe
                                 break;
                             }
                             continue;
+                        } else {
+                            for (TLRPC.Dialog newPinnedDialog : newPinnedDialogs) {
+                                if (newPinnedDialog.id == dialog.id) {
+                                    insertIndex++;
+                                    break;
+                                }
+                            }
                         }
-                        maxPinnedNum = Math.max(dialog.pinnedNum, maxPinnedNum);
                         dialog.pinned = false;
                         dialog.pinnedNum = 0;
                         changed = true;
                         pinnedNum++;
                     }
 
+                    maxPinnedNum = newPinnedDialogs.size();
                     ArrayList<Long> pinnedDialogs = new ArrayList<>();
+                    setLastPinnedNum(0);
                     if (!newPinnedDialogs.isEmpty()) {
                         putUsers(res.users, false);
                         putChats(res.chats, false);
                         for (int a = 0, N = newPinnedDialogs.size(); a < N; a++) {
                             TLRPC.Dialog dialog = newPinnedDialogs.get(a);
-                            dialog.pinnedNum = (N - a) + maxPinnedNum;
+                            dialog.pinnedNum = (maxPinnedNum - a);
+                            setLastPinnedNum(Math.max(lastPinnedNum, dialog.pinnedNum));
 
                             pinnedDialogs.add(dialog.id);
-                            TLRPC.Dialog d = dialogs_dict.get(dialog.id);
-                            if (d != null) {
+                            TLRPC.Dialog d;
+                            if (dialog instanceof Category) {
+                                d = categories_dict.get(((Category) dialog).getIdx());
                                 d.pinned = true;
                                 d.pinnedNum = dialog.pinnedNum;
-                                getMessagesStorage().setDialogPinned(dialog.id, dialog.pinnedNum);
                             } else {
-                                added = true;
-                                dialogs_dict.put(dialog.id, dialog);
-                                MessageObject messageObject = new_dialogMessage.get(dialog.id);
-                                dialogMessage.put(dialog.id, messageObject);
-                                if (messageObject != null && messageObject.messageOwner.to_id.channel_id == 0) {
-                                    dialogMessagesByIds.put(messageObject.getId(), messageObject);
-                                    if (messageObject.messageOwner.random_id != 0) {
-                                        dialogMessagesByRandomIds.put(messageObject.messageOwner.random_id, messageObject);
+                                d = dialogs_dict.get(dialog.id);
+                                if (d != null) {
+                                    d.pinned = true;
+                                    d.pinnedNum = dialog.pinnedNum;
+                                    getMessagesStorage().setDialogPinned(dialog.id, dialog.pinnedNum);
+                                } else {
+                                    added = true;
+                                    dialogs_dict.put(dialog.id, dialog);
+                                    MessageObject messageObject = new_dialogMessage.get(dialog.id);
+                                    dialogMessage.put(dialog.id, messageObject);
+                                    if (messageObject != null && messageObject.messageOwner.to_id.channel_id == 0) {
+                                        dialogMessagesByIds.put(messageObject.getId(), messageObject);
+                                        if (messageObject.messageOwner.random_id != 0) {
+                                            dialogMessagesByRandomIds.put(messageObject.messageOwner.random_id, messageObject);
+                                        }
                                     }
                                 }
                             }
-
                             changed = true;
                         }
                     }
@@ -8514,7 +8582,12 @@ public class MessagesController extends BaseController implements NotificationCe
                                 allDialogs.add(dialogs_dict.valueAt(a));
                             }
                         }
-                        sortDialogs(null);
+                        categoriesAll.clear();
+                        for (int a = 0, size = categories_dict.size(); a < size; a++) {
+                            categoriesAll.add(categories_dict.valueAt(a));
+                        }
+                        sortDialogs(null, false);
+                        reorderCategories();
                         getNotificationCenter().postNotificationName(NotificationCenter.dialogsNeedReload);
                     }
                     getMessagesStorage().unpinAllDialogsExceptNew(pinnedDialogs, folderId);
@@ -10483,6 +10556,7 @@ public class MessagesController extends BaseController implements NotificationCe
                                     dialog_id = -notifyPeer.peer.channel_id;
                                 }
                                 TLRPC.Dialog dialog = dialogs_dict.get(dialog_id);
+                                boolean isCategoryDialog = isDialogInCategory(dialog_id);
                                 if (dialog != null) {
                                     dialog.notify_settings = update.notify_settings;
                                 }
@@ -10507,21 +10581,27 @@ public class MessagesController extends BaseController implements NotificationCe
                                                 update.notify_settings.mute_until = until;
                                             }
                                         }
-                                        getMessagesStorage().setDialogFlags(dialog_id, ((long) until << 32) | 1);
-                                        getNotificationsController().removeNotificationsForDialog(dialog_id);
+                                        if (!isCategoryDialog) {
+                                            getMessagesStorage().setDialogFlags(dialog_id, ((long) until << 32) | 1);
+                                            getNotificationsController().removeNotificationsForDialog(dialog_id);
+                                        }
                                     } else {
                                         if (dialog != null) {
                                             update.notify_settings.mute_until = 0;
                                         }
                                         editor.putInt("notify2_" + dialog_id, 0);
-                                        getMessagesStorage().setDialogFlags(dialog_id, 0);
+                                        if (!isCategoryDialog) {
+                                            getMessagesStorage().setDialogFlags(dialog_id, 0);
+                                        }
                                     }
                                 } else {
                                     if (dialog != null) {
                                         update.notify_settings.mute_until = 0;
                                     }
                                     editor.remove("notify2_" + dialog_id);
-                                    getMessagesStorage().setDialogFlags(dialog_id, 0);
+                                    if (!isCategoryDialog) {
+                                        getMessagesStorage().setDialogFlags(dialog_id, 0);
+                                    }
                                 }
                             } else if (update.peer instanceof TLRPC.TL_notifyChats) {
                                 if ((update.notify_settings.flags & 1) != 0) {
@@ -11050,14 +11130,18 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public boolean isDialogMuted(long dialog_id) {
-        int mute_type = notificationsPreferences.getInt("notify2_" + dialog_id, -1);
+        String categoryKeyPrefix = "";
+        if (isDialogInCategory(dialog_id)) {
+            categoryKeyPrefix = "category_";
+        }
+        int mute_type = notificationsPreferences.getInt(categoryKeyPrefix + "notify2_" + dialog_id, -1);
         if (mute_type == -1) {
             return !getNotificationsController().isGlobalNotificationsEnabled(dialog_id);
         }
         if (mute_type == 2) {
             return true;
         } else if (mute_type == 3) {
-            int mute_until = notificationsPreferences.getInt("notifyuntil_" + dialog_id, 0);
+            int mute_until = notificationsPreferences.getInt(categoryKeyPrefix + "notifyuntil_" + dialog_id, 0);
             if (mute_until >= getConnectionsManager().getCurrentTime()) {
                 return true;
             }
@@ -11297,6 +11381,10 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public void sortDialogs(SparseArray<TLRPC.Chat> chatsDict) {
+        sortDialogs(chatsDict, true);
+    }
+
+    public void sortDialogs(SparseArray<TLRPC.Chat> chatsDict, boolean refreshCategories) {
         dialogsServerOnly.clear();
         dialogsCanAddUsers.clear();
         dialogsChannelsOnly.clear();
@@ -11398,7 +11486,9 @@ public class MessagesController extends BaseController implements NotificationCe
                 dialogsByFolder.remove(folderId);
             }
         }
-        refreshCategories();
+        if (refreshCategories) {
+            refreshCategoriesDialogsMainList();
+        }
     }
 
     private void addDialogToItsFolder(int index, TLRPC.Dialog dialog, boolean countMessages) {
@@ -11464,7 +11554,7 @@ public class MessagesController extends BaseController implements NotificationCe
             return;
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getParentActivity());
-        builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+        builder.setTitle(fragment.getParentActivity().getString(R.string.AppName));
         builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
         builder.setMessage(reason);
         fragment.showDialog(builder.create());
@@ -11573,12 +11663,18 @@ public class MessagesController extends BaseController implements NotificationCe
             } else {
                 args.putInt("user_id", user.id);
             }
-            if (type == 0) {
-                fragment.presentFragment(new ProfileActivity(args));
-            } else if (type == 2) {
-                fragment.presentFragment(new ChatActivity(args), true, true);
+            final BaseFragment finalFragment = type == 0 ? new ProfileActivity(args) : new ChatActivity(args);
+            final boolean removeLast = user != null && type != 3 && user.bot || closeLast;
+            final boolean forceWithoutAnimation = type == 2;
+            if(MessagesController.getInstance(UserConfig.selectedAccount).lockedDialogs_dict.get(chat != null ? chat.id : user.id) == null){
+                fragment.presentFragment(finalFragment, removeLast, forceWithoutAnimation);
             } else {
-                fragment.presentFragment(new ChatActivity(args), closeLast);
+                DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, chat != null ? chat.id : user.id);
+                privacySettingsActivity.setDelegate(id -> {
+                    privacySettingsActivity.removeSelfFromStack();
+                    fragment.presentFragment(finalFragment, removeLast, forceWithoutAnimation);
+                });
+                fragment.presentFragment(privacySettingsActivity);
             }
         }
     }
@@ -11681,69 +11777,75 @@ public class MessagesController extends BaseController implements NotificationCe
         loadMessages(dialog_id, 1, finalMessageId, 0, true, 0, classGuid, 3, 0, false, false, 0);
     }
 
-    private void reloadDialogsWithCategories() {
-        disposables.add(
-                Single.fromCallable(() -> getMessagesController().refreshCategories())
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe((result) -> {
-                           getNotificationCenter().postNotificationName(NotificationCenter.refreshDialogsWithCategoriesList);
-                           disposables.clear();
-                        }));
-    }
-
-    private boolean refreshCategories() {
+    public boolean refreshCategoriesDialogsMainList() {
         cleanUpCategories();
         ArrayList<TLRPC.Dialog> dialogsList = dialogsByFolder.get(0);
 
         if (dialogsList == null) {
             dialogsList = new ArrayList<>();
         }
-        if (storedCategories.isEmpty()) {
-            dialogsWithCategories.addAll(dialogsList);
-            return true;
-        }
-        processAllDialogsToCategories(dialogsList);
-
-        return true;
-    }
-
-    private void cleanUpCategories(){
-        dialogsWithCategories.clear();
-        categoriesAll.clear();
-        categories_dict.clear();
-        dialogsForwardWithCategories.clear();
-        chosenDialogsByCategory.clear();
-        dialogsForwardByCategory.clear();
-        unchosenDialogsByCategory.clear();
-    }
-
-    private void processAllDialogsToCategories(ArrayList<TLRPC.Dialog> dialogsList){
         if (!dialogsList.isEmpty() && dialogsList.get(0) instanceof TLRPC.TL_dialogFolder) {
             dialogsWithCategories.add(dialogsList.get(0));
+            dialogsWithCategoriesPinnedList.add(dialogsList.get(0));
         }
-        if(!dialogsForward.isEmpty()){
-            dialogsForwardWithCategories.add(dialogsForward.get(0));
-        }
+        return processAllDialogsToCategories(dialogsList);
+    }
+
+    private void cleanUpCategories() {
+        dialogsWithCategories = new ArrayList<>();
+        categories_dict = new LongSparseArray<>();
+        categoriesAll = new ArrayList<>();
+        chosenDialogsByCategory = new LongSparseArray<>();
+        dialogsForwardByCategory = new LongSparseArray<>();
+        unchosenDialogsByCategory = new ArrayList<>();
+        dialogsForwardWithCategories = new ArrayList<>();
+        dialogsWithCategoriesPinnedList = new ArrayList<>();
+    }
+
+    private boolean processAllDialogsToCategories(ArrayList<TLRPC.Dialog> dialogsList) {
         boolean[] isDialogAddedToCategory = new boolean[dialogsList.size()];
+        boolean folderExists = (!dialogsList.isEmpty() && dialogsList.get(0) instanceof TLRPC.TL_dialogFolder);
+        int start = folderExists ? 1 : 0;
         for (StoredCategory category : storedCategories) {
             int categoryUnreads = 0;
             ArrayList<TLRPC.Dialog> dialogsChosen = new ArrayList<>();
+            ArrayList<Long> dialogsChosenIds = new ArrayList<>();
             ArrayList<TLRPC.Dialog> dialogsChosenForward = new ArrayList<>();
             Set<Long> currentCategoryIds = category.getIds();
-            for (int a = 0; a < dialogsList.size(); a++) {
+            List<Long> pinnedIds = category.getPinnedIds();
+
+            for (int a = start; a < dialogsList.size(); a++) {
                 TLRPC.Dialog dialog = dialogsList.get(a);
-                if (dialog instanceof TLRPC.TL_dialogFolder || isDialogAddedToCategory[a]) {
+                if (isDialogAddedToCategory[a]) {
                     continue;
                 }
 
                 if (currentCategoryIds.contains(dialog.id)) {
                     categoryUnreads += dialog.unread_count;
-                    dialogsChosen.add(dialog);
+                    if (!category.getPinnedIds().contains(dialog.id)) {
+                        dialogsChosenIds.add(dialog.id);
+                        dialogsChosen.add(dialog);
+                        if (dialogsForward.contains(dialog)) {
+                            dialogsChosenForward.add(dialog);
+                        }
+                    }
                     isDialogAddedToCategory[a] = true;
+                }
+            }
+            Collections.sort(
+                    dialogsChosen,
+                    (d1, d2) -> AndroidUtilities.compare(
+                            d2.last_message_date,
+                            d1.last_message_date));
 
-                    if(dialogsForward.contains(dialog)){
-                        dialogsChosenForward.add(dialog);
+
+            for (int i = 0; i < pinnedIds.size(); i++) {
+                TLRPC.Dialog dialog = dialogs_dict.get(pinnedIds.get(i));
+                if (dialog != null) {
+                    dialogsChosenIds.add(0, dialog.id);
+                    dialogsChosen.add(0, dialog);
+                    if (dialogsForward.contains(dialog)) {
+                        dialogsChosenForward.add(0, dialog);
                     }
                 }
             }
@@ -11751,70 +11853,200 @@ public class MessagesController extends BaseController implements NotificationCe
             Category newCategory = new Category(
                     category,
                     categoryUnreads,
-                    dialogsChosen
+                    dialogsChosenIds,
+                    new ArrayList<>(category.getPinnedIds())
             );
 
             long categoryId = category.getId();
             updateCategoryLists(categoryId, newCategory, dialogsChosen, dialogsChosenForward);
         }
 
-        updateDialogsWithCategoriesLists(dialogsList, isDialogAddedToCategory);
+        return updateDialogsWithCategoriesLists(dialogsList, isDialogAddedToCategory);
     }
 
     private void updateCategoryLists(long categoryId, Category newCategory, ArrayList<TLRPC.Dialog> dialogsAddedToCategory,
-                                     ArrayList<TLRPC.Dialog> dialogsForwardAddedToCategory){
+                                     ArrayList<TLRPC.Dialog> dialogsForwardAddedToCategory) {
         chosenDialogsByCategory.put(categoryId, dialogsAddedToCategory);
         dialogsForwardByCategory.put(categoryId, dialogsForwardAddedToCategory);
         categories_dict.put(categoryId, newCategory);
-        categoriesAll.add(newCategory);
         dialogsWithCategories.add(newCategory);
-        if(!dialogsForwardAddedToCategory.isEmpty()){
+        categoriesAll.add(newCategory);
+        if (!dialogsForwardAddedToCategory.isEmpty()) {
             dialogsForwardWithCategories.add(newCategory);
         }
+        dialogsWithCategoriesPinnedList.add(newCategory);
     }
 
-    private void updateDialogsWithCategoriesLists(ArrayList<TLRPC.Dialog> dialogsList, boolean[] isDialogAddedToCategory){
-        int selfId = getUserConfig().getClientUserId();
-        for (int i = 0; i < dialogsList.size(); i++) {
+    private boolean updateDialogsWithCategoriesLists(ArrayList<TLRPC.Dialog> dialogsList, boolean[] isDialogAddedToCategory) {
+        int start = (!dialogsList.isEmpty() && dialogsList.get(0) instanceof TLRPC.TL_dialogFolder) ? 1 : 0;
+        for (int i = start; i < dialogsList.size(); i++) {
             TLRPC.Dialog dialog = dialogsList.get(i);
-            if (dialog instanceof TLRPC.TL_dialogFolder) {
-                continue;
-            }
+            dialogsWithCategoriesPinnedList.add(dialog);
             if (isDialogAddedToCategory[i]) {
+                dialogsChannelsOnly.remove(dialog);
+                dialogsGroupsOnly.remove(dialog);
+                dialogsUsersOnly.remove(dialog);
                 continue;
             }
-            if(dialogsForward.contains(dialog) && dialog.id != selfId){
-                dialogsForwardWithCategories.add(dialog);
+            LockDialog lockedDialog = lockedDialogs_dict.get(dialog.id);
+            if (lockedDialog == null || !lockedDialog.getHidden()) {
+                unchosenDialogsByCategory.add(dialog);
+                dialogsWithCategories.add(dialog);
+                if (dialogsForward.contains(dialog) && dialog.id != getUserConfig().getClientUserId()) {
+                    dialogsForwardWithCategories.add(dialog);
+                }
             }
-            unchosenDialogsByCategory.add(dialog);
-            dialogsWithCategories.add(dialog);
         }
+
+        if (!categoriesAll.isEmpty()) {
+            sortDialogCategoriesList();
+        }
+        if (!dialogsForward.isEmpty() && !isDialogInCategory(dialogsForward.get(0).id)) {
+            dialogsForwardWithCategories.add(dialogsForward.get(0));
+        }
+        getNotificationCenter().postNotificationName(NotificationCenter.refreshDialogsWithCategoriesList);
+        getMediaDataController().loadHints(true, true);
+        getNotificationCenter().postNotificationName(NotificationCenter.needReloadRecentDialogsSearch);
+        return true;
+    }
+
+    public void sortDialogCategoriesList() {
+        Collections.sort(dialogsWithCategories, dialogCategoryComparator);
+        Collections.sort(dialogsWithCategoriesPinnedList, dialogCategoryComparator);
+        Collections.sort(categoriesAll, dialogCategoryComparator);
+        Collections.sort(dialogsForwardWithCategories, dialogCategoryComparator);
     }
 
     public ArrayList<TLRPC.Dialog> getAllDialogs() {
         return allDialogs;
     }
 
-    public Disposable startCategoriesObserving(long userId) {
-        Log.d(" Storage", "Categories observer started for user " + userId);
-        return localStorage.streamAvailableCategories(userId)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeWith(new DisposableObserver<List<StoredCategory>>() {
-                    @Override
-                    public void onNext(List<StoredCategory> categories) {
-                        storedCategories = categories;
-                        getNotificationCenter().postNotificationName(NotificationCenter.refreshCategories);
-                    }
+    public boolean isDialogInCategory(long did) {
+        for (TLRPC.Dialog category : categoriesAll) {
+            if (((Category) category).getDialogs().contains(did)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-                    @Override
-                    public void onComplete() {
-                    }
+    public long getCategoryIdForDialog(long did) {
+        ArrayList<TLRPC.Dialog> categories = getMessagesController().categoriesAll;
+        for (TLRPC.Dialog category : categories) {
+            if (((Category) category).getDialogs().contains(did)) {
+                return ((Category) category).getIdx();
+            }
+        }
+        return 0;
+    }
 
-                    @Override
-                    public void onError(Throwable t) {
-                        t.printStackTrace();
-                    }
-                });
+    public void reorderCategoryDialogs(long categoryId) {
+        long userId = UserConfig.getInstance(currentAccount).getClientUserId();
+        Category category = categories_dict.get(categoryId);
+        ArrayList<Long> pinnedDialogs = new ArrayList<>();
+        for (TLRPC.Dialog dialog : chosenDialogsByCategory.get(categoryId)) {
+            if (!category.getPinnedDialogs().contains(dialog.id)) {
+                break;
+            }
+            pinnedDialogs.add(0, dialog.id);
+        }
+        disposables.add(
+                localStorage.reorderDialogs(categoryId, userId, pinnedDialogs)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(() -> {
+                                    Log.d("Local Storage", "Category " + categoryId + " dialogs reordered");
+                                }, Throwable::printStackTrace
+                        )
+        );
+    }
+
+
+    public void reorderCategories() {
+        ArrayList<TLRPC.Dialog> dialogs = new ArrayList<>(categoriesAll);
+        long userId = UserConfig.getInstance(currentAccount).getClientUserId();
+        disposables.add(
+                localStorage.reorderCategories(userId, dialogs)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(() -> {
+                                    reloadDbCategories();
+                                    Log.d("Local Storage", "Categories reordered");
+                                }, Throwable::printStackTrace
+                        )
+        );
+    }
+
+    public void reloadDbCategories() {
+        long userId = UserConfig.getInstance(currentAccount).getClientUserId();
+        Log.d(" Storage", "Categories reload from db started for user " + userId);
+        disposables.add(
+                localStorage.getUserCategories(userId)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe((categories) -> {
+                                    storedCategories = categories;
+                                    refreshCategoriesDialogsMainList();
+                                    disposables.clear();
+                                }, Throwable::printStackTrace
+                        )
+        );
+    }
+
+    public void reloadDbLockedDialogs(boolean refreshCategories, boolean reloadCategories) {
+        long userId = UserConfig.getInstance(currentAccount).getClientUserId();
+        lockedDialogs_dict.clear();
+        Log.d(" Storage", "Locked dialogs reload from db started for user " + userId);
+        disposables.add(
+                localStorage.getUserLockedDialogs(userId)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe((dbDialogs) -> {
+                                    lockedDialogs = dbDialogs;
+                                    for (LockDialog lockedDialog : lockedDialogs) {
+                                        lockedDialogs_dict.put(lockedDialog.getIdx(), lockedDialog);
+                                    }
+                                    if (refreshCategories) {
+                                        refreshCategoriesDialogsMainList();
+                                    }
+                                    if (reloadCategories) {
+                                        reloadDbCategories();
+                                    }else{
+                                        getMediaDataController().loadHints(true, true);
+                                        getNotificationCenter().postNotificationName(NotificationCenter.needReloadRecentDialogsSearch);
+                                        disposables.clear();
+                                    }
+                                }, Throwable::printStackTrace
+                        )
+        );
+    }
+
+    public boolean isDialogLocked(long did){
+        return lockedDialogs_dict.get(did) != null;
+    }
+
+    public boolean isDialogHidden(long did){
+        LockDialog dialog = lockedDialogs_dict.get(did);
+        return dialog != null && dialog.getHidden();
+    }
+
+    public boolean isDialogHiddenAndPasswordMatch(long did, String pass){
+        LockDialog dialog = lockedDialogs_dict.get(did);
+        if(dialog == null){
+            return false;
+        } else if(dialog.getHidden() && dialog.getPasscode().equals(pass)){
+            return true;
+        }
+        return false;
+    }
+
+    public int getLastPinnedNum() {
+        setLastPinnedNum(++lastPinnedNum);
+        return lastPinnedNum;
+    }
+
+    public void setLastPinnedNum(int num) {
+        lastPinnedNum = num;
+        mainPreferences.edit().putInt("lastPinnedNum_" + currentAccount, lastPinnedNum).commit();
     }
 }

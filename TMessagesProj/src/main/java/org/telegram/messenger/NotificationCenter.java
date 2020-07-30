@@ -96,7 +96,7 @@ public class NotificationCenter {
     public static final int didUpdateReactions = totalEvents++;
     public static final int scheduledMessagesUpdated = totalEvents++;
 
-    public static final int refreshCategories = totalEvents++;
+    public static final int reloadLockedDialogs = totalEvents++;
     public static final int refreshDialogsWithCategoriesList = totalEvents++;
 
     public static final int walletPendingTransactionsChanged = totalEvents++;

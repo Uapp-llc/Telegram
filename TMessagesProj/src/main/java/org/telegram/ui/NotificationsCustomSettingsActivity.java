@@ -12,6 +12,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.app.Activity;
+import android.app.Notification;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -66,10 +67,13 @@ import org.telegram.ui.Components.RecyclerListView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import static org.telegram.messenger.NotificationsController.TYPE_CATEGORY;
 
 public class NotificationsCustomSettingsActivity extends BaseFragment {
 
@@ -116,7 +120,7 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
         this(type, notificationExceptions, load, -1);
     }
 
-    public NotificationsCustomSettingsActivity(int type, ArrayList<NotificationsSettingsActivity.NotificationException> notificationExceptions, boolean load,  long categoryId) {
+    public NotificationsCustomSettingsActivity(int type, ArrayList<NotificationsSettingsActivity.NotificationException> notificationExceptions, boolean load, long categoryId) {
         super();
         currentType = type;
         this.categoryId = categoryId;
@@ -156,7 +160,7 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                 }
             }
         });
-        if (exceptions != null && !exceptions.isEmpty() && currentType != NotificationsController.TYPE_CATEGORY) {
+        if (exceptions != null && !exceptions.isEmpty() && currentType != TYPE_CATEGORY) {
             ActionBarMenu menu = actionBar.createMenu();
             ActionBarMenuItem searchItem = menu.addItem(search_button, R.drawable.ic_ab_search).setIsSearchField(true).setActionBarMenuItemSearchListener(new ActionBarMenuItem.ActionBarMenuItemSearchListener() {
                 @Override
@@ -298,10 +302,14 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                         actionBar.closeSearchField();
                     } else {
                         SharedPreferences preferences = getNotificationsSettings();
-                        exception.hasCustom = preferences.getBoolean("custom_" + exception.did, false);
-                        exception.notify = preferences.getInt("notify2_" + exception.did, 0);
+                        String categoryKeyPrefix = "";
+                        if (currentType == TYPE_CATEGORY) {
+                            categoryKeyPrefix = "category_";
+                        }
+                        exception.hasCustom = preferences.getBoolean(categoryKeyPrefix + "custom_" + exception.did, false);
+                        exception.notify = preferences.getInt(categoryKeyPrefix + "notify2_" + exception.did, 0);
                         if (exception.notify != 0) {
-                            int time = preferences.getInt("notifyuntil_" + exception.did, -1);
+                            int time = preferences.getInt(categoryKeyPrefix + "notifyuntil_" + exception.did, -1);
                             if (time != -1) {
                                 exception.muteUntil = time;
                             }
@@ -338,9 +346,15 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                     Bundle args2 = new Bundle();
                     args2.putLong("dialog_id", dids.get(0));
                     args2.putBoolean("exception", true);
+                    args2.putBoolean("category", currentType == TYPE_CATEGORY);
                     ProfileNotificationsActivity profileNotificationsActivity = new ProfileNotificationsActivity(args2);
                     profileNotificationsActivity.setDelegate(exception -> {
-                        exceptions.add(0, exception);
+                        int oldExceptionIdx = exceptions.indexOf(exception);
+                        if (oldExceptionIdx != -1) {
+                            exceptions.set(oldExceptionIdx, exception);
+                        } else {
+                            exceptions.add(0, exception);
+                        }
                         updateRows();
                         adapter.notifyDataSetChanged();
                     });
@@ -354,9 +368,13 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                 builder.setPositiveButton(LocaleController.getString("Delete", R.string.Delete), (dialogInterface, i) -> {
                     SharedPreferences preferences = getNotificationsSettings();
                     SharedPreferences.Editor editor = preferences.edit();
+                    String categoryKeyPrefix = "";
+                    if (currentType == TYPE_CATEGORY) {
+                        categoryKeyPrefix = "category_";
+                    }
                     for (int a = 0, N = exceptions.size(); a < N; a++) {
                         NotificationsSettingsActivity.NotificationException exception = exceptions.get(a);
-                        editor.remove("notify2_" + exception.did).remove("custom_" + exception.did);
+                        editor.remove(categoryKeyPrefix + "notify2_" + exception.did).remove(categoryKeyPrefix + "custom_" + exception.did);
                         getMessagesStorage().setDialogFlags(exception.did, 0);
                         TLRPC.Dialog dialog = getMessagesController().dialogs_dict.get(exception.did);
                         if (dialog != null) {
@@ -364,9 +382,11 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                         }
                     }
                     editor.commit();
-                    for (int a = 0, N = exceptions.size(); a < N; a++) {
-                        NotificationsSettingsActivity.NotificationException exception = exceptions.get(a);
-                        getNotificationsController().updateServerNotificationsSettings(exception.did, false);
+                    if (currentType != TYPE_CATEGORY) {
+                        for (int a = 0, N = exceptions.size(); a < N; a++) {
+                            NotificationsSettingsActivity.NotificationException exception = exceptions.get(a);
+                            getNotificationsController().updateServerNotificationsSettings(exception.did, false);
+                        }
                     }
 
                     exceptions.clear();
@@ -402,10 +422,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                             offUntil = preferences.getInt("EnableAll2", 0);
                         } else if (currentType == NotificationsController.TYPE_GROUP) {
                             offUntil = preferences.getInt("EnableGroup2", 0);
-                        } else if(currentType == NotificationsController.TYPE_CHANNEL){
+                        } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                             offUntil = preferences.getInt("EnableChannel2", 0);
                         } else {
-                            offUntil = preferences.getInt(String.format("EnableCategory2_%d", categoryId), 0);
+                            offUntil = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_ENABLED, categoryId), 0);
                         }
                         int currentTime = getConnectionsManager().getCurrentTime();
                         int iconType;
@@ -435,12 +455,12 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                 } else if (currentType == NotificationsController.TYPE_GROUP) {
                     enabled = preferences.getBoolean("EnablePreviewGroup", true);
                     editor.putBoolean("EnablePreviewGroup", !enabled);
-                } else if(currentType == NotificationsController.TYPE_CHANNEL){
+                } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                     enabled = preferences.getBoolean("EnablePreviewChannel", true);
                     editor.putBoolean("EnablePreviewChannel", !enabled);
-                } else{
-                    enabled = preferences.getBoolean(String.format("EnablePreviewCategory_%d", categoryId), true);
-                    editor.putBoolean(String.format("EnablePreviewCategory_%d", categoryId), !enabled);
+                } else {
+                    enabled = preferences.getBoolean(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_PREVIEW, categoryId), true);
+                    editor.putBoolean(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_PREVIEW, categoryId), !enabled);
                 }
                 editor.commit();
                 getNotificationsController().updateServerNotificationsSettings(currentType);
@@ -468,10 +488,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                         path = preferences.getString("GlobalSoundPath", defaultPath);
                     } else if (currentType == NotificationsController.TYPE_GROUP) {
                         path = preferences.getString("GroupSoundPath", defaultPath);
-                    } else if(currentType == NotificationsController.TYPE_CHANNEL){
+                    } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                         path = preferences.getString("ChannelSoundPath", defaultPath);
-                    } else{
-                        path = preferences.getString(String.format("CategorySoundPath_%d", categoryId), defaultPath);
+                    } else {
+                        path = preferences.getString(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_SOUND_PATH, categoryId), defaultPath);
                     }
 
                     if (path != null && !path.equals("NoSound")) {
@@ -491,7 +511,7 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                 if (!view.isEnabled()) {
                     return;
                 }
-                showDialog(AlertsCreator.createColorSelectDialog(getParentActivity(), 0, currentType, categoryId, () -> {
+                showDialog(AlertsCreator.createColorSelectDialog(getParentActivity(), NotificationsCustomSettingsActivity.this, 0, currentType, categoryId, () -> {
                     RecyclerView.ViewHolder holder = listView.findViewHolderForAdapterPosition(position);
                     if (holder != null) {
                         adapter.onBindViewHolder(holder, position);
@@ -516,10 +536,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                     key = "vibrate_messages";
                 } else if (currentType == NotificationsController.TYPE_GROUP) {
                     key = "vibrate_group";
-                }  else if(currentType == NotificationsController.TYPE_CHANNEL){
+                } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                     key = "vibrate_channel";
-                } else{
-                    key = String.format("vibrate_category_%d", categoryId);
+                } else {
+                    key = String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_VIBRATE, categoryId);
                 }
                 showDialog(AlertsCreator.createVibrationSelectDialog(getParentActivity(), 0, key, () -> {
                     RecyclerView.ViewHolder holder = listView.findViewHolderForAdapterPosition(position);
@@ -620,11 +640,13 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
             ArrayList<NotificationsSettingsActivity.NotificationException> chatsResult = new ArrayList<>();
             ArrayList<NotificationsSettingsActivity.NotificationException> channelsResult = new ArrayList<>();
             ArrayList<NotificationsSettingsActivity.NotificationException> categoryDialogsResult = new ArrayList<>();
-            ArrayList<TLRPC.Dialog> categoryAllDialogs = new ArrayList<>();
+            ArrayList<Long> categoryAllDialogs = new ArrayList<>();
             LongSparseArray<NotificationsSettingsActivity.NotificationException> waitingForLoadExceptions = new LongSparseArray<>();
 
-            if(categoryId != -1){
+            String categoryExceptionKeyPrefix = "";
+            if (categoryId != -1) {
                 categoryAllDialogs.addAll(getMessagesController().categories_dict.get(categoryId).getDialogs());
+                categoryExceptionKeyPrefix = "category_";
             }
             ArrayList<Integer> usersToLoad = new ArrayList<>();
             ArrayList<Integer> chatsToLoad = new ArrayList<>();
@@ -639,17 +661,17 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
             Map<String, ?> values = preferences.getAll();
             for (Map.Entry<String, ?> entry : values.entrySet()) {
                 String key = entry.getKey();
-                if (key.startsWith("notify2_")) {
-                    key = key.replace("notify2_", "");
+                if (key.startsWith(categoryExceptionKeyPrefix + "notify2_")) {
+                    key = key.replace(categoryExceptionKeyPrefix + "notify2_", "");
 
                     long did = Utilities.parseLong(key);
                     if (did != 0 && did != selfId) {
                         NotificationsSettingsActivity.NotificationException exception = new NotificationsSettingsActivity.NotificationException();
                         exception.did = did;
-                        exception.hasCustom = preferences.getBoolean("custom_" + did, false);
+                        exception.hasCustom = preferences.getBoolean(categoryExceptionKeyPrefix + "custom_" + did, false);
                         exception.notify = (Integer) entry.getValue();
                         if (exception.notify != 0) {
-                            Integer time = (Integer) values.get("notifyuntil_" + key);
+                            Integer time = (Integer) values.get(categoryExceptionKeyPrefix + "notifyuntil_" + key);
                             if (time != null) {
                                 exception.muteUntil = time;
                             }
@@ -658,9 +680,8 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                         int lower_id = (int) did;
                         int high_id = (int) (did << 32);
 
-                        TLRPC.Dialog dialog = getMessagesController().dialogs_dict.get(lower_id);
                         boolean isInCategory = false;
-                        if(categoryAllDialogs.contains(dialog)){
+                        if (categoryAllDialogs.contains(did)) {
                             isInCategory = true;
                         }
                         if (lower_id != 0) {
@@ -672,10 +693,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                                 } else if (user.deleted) {
                                     continue;
                                 }
-                                usersResult.add(exception);
-                                if(currentType == NotificationsController.TYPE_CATEGORY && isInCategory) {
+                                if (currentType == TYPE_CATEGORY && isInCategory) {
                                     categoryDialogsResult.add(exception);
                                 }
+                                usersResult.add(exception);
                             } else {
                                 TLRPC.Chat chat = getMessagesController().getChat(-lower_id);
                                 if (chat == null) {
@@ -685,13 +706,13 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                                 } else if (chat.left || chat.kicked || chat.migrated_to != null) {
                                     continue;
                                 }
+                                if (currentType == TYPE_CATEGORY && isInCategory) {
+                                    categoryDialogsResult.add(exception);
+                                }
                                 if (ChatObject.isChannel(chat) && !chat.megagroup) {
                                     channelsResult.add(exception);
                                 } else {
                                     chatsResult.add(exception);
-                                }
-                                if(currentType == NotificationsController.TYPE_CATEGORY && isInCategory) {
-                                    categoryDialogsResult.add(exception);
                                 }
                             }
                         } else if (high_id != 0) {
@@ -708,10 +729,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                                     continue;
                                 }
                             }
-                            usersResult.add(exception);
-                            if(currentType == NotificationsController.TYPE_CATEGORY && isInCategory) {
+                            if (currentType == TYPE_CATEGORY && isInCategory) {
                                 categoryDialogsResult.add(exception);
                             }
+                            usersResult.add(exception);
                         }
                     }
                 }
@@ -739,6 +760,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                     waitingForLoadExceptions.remove(-chat.id);
 
                     if (exception != null) {
+                        Long cid = (long) -chat.id;
+                        if (currentType == TYPE_CATEGORY && categoryAllDialogs.contains(cid)) {
+                            categoryDialogsResult.add(exception);
+                        }
                         if (ChatObject.isChannel(chat) && !chat.megagroup) {
                             channelsResult.add(exception);
                         } else {
@@ -762,8 +787,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                     if ((int) did < 0) {
                         chatsResult.remove(waitingForLoadExceptions.valueAt(a));
                         channelsResult.remove(waitingForLoadExceptions.valueAt(a));
+                        categoryDialogsResult.remove(waitingForLoadExceptions.valueAt(a));
                     } else {
                         usersResult.remove(waitingForLoadExceptions.valueAt(a));
+                        categoryDialogsResult.remove(waitingForLoadExceptions.valueAt(a));
                     }
                 }
             }
@@ -775,9 +802,9 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                     exceptions = usersResult;
                 } else if (currentType == NotificationsController.TYPE_GROUP) {
                     exceptions = chatsResult;
-                } else if (currentType == NotificationsController.TYPE_CHANNEL){
+                } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                     exceptions = channelsResult;
-                } else{
+                } else {
                     exceptions = categoryDialogsResult;
                 }
                 updateRows();
@@ -807,7 +834,9 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                 messagePriorityRow = -1;
             }
             groupSection2Row = rowCount++;
-            exceptionsAddRow = rowCount++;
+            if(currentType == TYPE_CATEGORY && !getMessagesController().categories_dict.get(categoryId).getDialogs().isEmpty()){
+                exceptionsAddRow = rowCount++;
+            }
         } else {
             alertRow = -1;
             alertSection2Row = -1;
@@ -887,13 +916,13 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                     editor.putString("ChannelSound", "NoSound");
                     editor.putString("ChannelSoundPath", "NoSound");
                 }
-            } else if (currentType == NotificationsController.TYPE_CATEGORY) {
+            } else if (currentType == TYPE_CATEGORY) {
                 if (name != null && ringtone != null) {
-                    editor.putString(String.format("CategorySound_%d", categoryId), name);
-                    editor.putString(String.format("CategorySoundPath_%d", categoryId), ringtone.toString());
+                    editor.putString(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_SOUND, categoryId), name);
+                    editor.putString(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_SOUND_PATH, categoryId), ringtone.toString());
                 } else {
-                    editor.putString(String.format("CategorySound_%d", categoryId), "NoSound");
-                    editor.putString(String.format("CategorySoundPath_%d", categoryId), "NoSound");
+                    editor.putString(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_SOUND, categoryId), "NoSound");
+                    editor.putString(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_SOUND_PATH, categoryId), "NoSound");
                 }
             }
             editor.commit();
@@ -1223,10 +1252,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                             enabled = preferences.getBoolean("EnablePreviewAll", true);
                         } else if (currentType == NotificationsController.TYPE_GROUP) {
                             enabled = preferences.getBoolean("EnablePreviewGroup", true);
-                        } else if (currentType == NotificationsController.TYPE_CHANNEL){
+                        } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                             enabled = preferences.getBoolean("EnablePreviewChannel", true);
-                        }else{
-                            enabled = preferences.getBoolean(String.format("EnablePreviewCategory_%d", categoryId), true);
+                        } else {
+                            enabled = preferences.getBoolean(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_PREVIEW, categoryId), true);
                         }
                         checkCell.setTextAndCheck(LocaleController.getString("MessagePreview", R.string.MessagePreview), enabled, true);
                     }
@@ -1246,10 +1275,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                         color = preferences.getInt("MessagesLed", 0xff0000ff);
                     } else if (currentType == NotificationsController.TYPE_GROUP) {
                         color = preferences.getInt("GroupLed", 0xff0000ff);
-                    } else if (currentType == NotificationsController.TYPE_CHANNEL){
+                    } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                         color = preferences.getInt("ChannelLed", 0xff0000ff);
-                    } else{
-                        color = preferences.getInt(String.format("CategoryLed_%d", categoryId), 0xff0000ff);
+                    } else {
+                        color = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_LED, categoryId), 0xff0000ff);
                     }
                     for (int a = 0; a < 9; a++) {
                         if (TextColorCell.colorsToSave[a] == color) {
@@ -1277,10 +1306,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                             value = preferences.getString("GlobalSound", LocaleController.getString("SoundDefault", R.string.SoundDefault));
                         } else if (currentType == NotificationsController.TYPE_GROUP) {
                             value = preferences.getString("GroupSound", LocaleController.getString("SoundDefault", R.string.SoundDefault));
-                        } else if (currentType == NotificationsController.TYPE_CHANNEL){
+                        } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                             value = preferences.getString("ChannelSound", LocaleController.getString("SoundDefault", R.string.SoundDefault));
-                        } else{
-                            value = preferences.getString(String.format("CategorySound_%d", categoryId), LocaleController.getString("SoundDefault", R.string.SoundDefault));
+                        } else {
+                            value = preferences.getString(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_SOUND, categoryId), LocaleController.getString("SoundDefault", R.string.SoundDefault));
                         }
                         if (value.equals("NoSound")) {
                             value = LocaleController.getString("NoSound", R.string.NoSound);
@@ -1292,10 +1321,11 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                             value = preferences.getInt("vibrate_messages", 0);
                         } else if (currentType == NotificationsController.TYPE_GROUP) {
                             value = preferences.getInt("vibrate_group", 0);
-                        } else if (currentType == NotificationsController.TYPE_CHANNEL){
+                        } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                             value = preferences.getInt("vibrate_channel", 0);
-                        }else {
-                            value = preferences.getInt(String.format("vibrate_category_%d", categoryId), 0); }
+                        } else {
+                            value = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_VIBRATE, categoryId), 0);
+                        }
                         if (value == 0) {
                             textCell.setTextAndValue(LocaleController.getString("Vibrate", R.string.Vibrate), LocaleController.getString("VibrationDefault", R.string.VibrationDefault), true);
                         } else if (value == 1) {
@@ -1313,10 +1343,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                             value = preferences.getInt("priority_messages", 1);
                         } else if (currentType == NotificationsController.TYPE_GROUP) {
                             value = preferences.getInt("priority_group", 1);
-                        } else if (currentType == NotificationsController.TYPE_CHANNEL){
+                        } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                             value = preferences.getInt("priority_channel", 1);
-                        } else{
-                            value = preferences.getInt(String.format("priority_category_%d", categoryId), 1);
+                        } else {
+                            value = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_PRIORITY, categoryId), 1);
                         }
                         if (value == 0) {
                             textCell.setTextAndValue(LocaleController.getString("NotificationsImportance", R.string.NotificationsImportance), LocaleController.getString("NotificationsPriorityHigh", R.string.NotificationsPriorityHigh), false);
@@ -1333,10 +1363,10 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                             option = preferences.getInt("popupAll", 0);
                         } else if (currentType == NotificationsController.TYPE_GROUP) {
                             option = preferences.getInt("popupGroup", 0);
-                        } else if (currentType == NotificationsController.TYPE_CHANNEL){
+                        } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                             option = preferences.getInt("popupChannel", 0);
-                        } else{
-                            option = preferences.getInt(String.format("popupCategory_%d", categoryId), 0);
+                        } else {
+                            option = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_POPUP, categoryId), 0);
                         }
                         String value;
                         if (option == 0) {
@@ -1366,12 +1396,12 @@ public class NotificationsCustomSettingsActivity extends BaseFragment {
                     } else if (currentType == NotificationsController.TYPE_GROUP) {
                         text = LocaleController.getString("NotificationsForGroups", R.string.NotificationsForGroups);
                         offUntil = preferences.getInt("EnableGroup2", 0);
-                    } else if (currentType == NotificationsController.TYPE_CHANNEL){
+                    } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                         text = LocaleController.getString("NotificationsForChannels", R.string.NotificationsForChannels);
                         offUntil = preferences.getInt("EnableChannel2", 0);
-                    } else{
+                    } else {
                         text = LocaleController.getString("NotificationsForCategory", R.string.NotificationsForCategory);
-                        offUntil = preferences.getInt(String.format("EnableCategory2_%d", categoryId), 0);
+                        offUntil = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_ENABLED, categoryId), 0);
                     }
                     int currentTime = getConnectionsManager().getCurrentTime();
                     boolean enabled;

@@ -43,6 +43,7 @@ import org.telegram.ui.Cells.HeaderCell;
 import org.telegram.ui.Cells.LoadingCell;
 import org.telegram.ui.Cells.ShadowSectionCell;
 import org.telegram.ui.Cells.UserCell;
+import org.telegram.ui.Components.Category;
 import org.telegram.ui.Components.PullForegroundDrawable;
 import org.telegram.ui.Components.CombinedDrawable;
 import org.telegram.ui.Components.LayoutHelper;
@@ -62,6 +63,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
     private ArrayList<TLRPC.TL_contact> onlineContacts;
     private int prevContactsCount;
     private int dialogsType;
+    private long categoryId;
     private int folderId;
     private long openedDialogId;
     private int currentCount;
@@ -75,10 +77,11 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
     private long lastSortTime;
     private PullForegroundDrawable pullForegroundDrawable;
 
-    public DialogsAdapter(Context context, int type, int folder, boolean onlySelect) {
+    public DialogsAdapter(Context context, int type, int folder, boolean onlySelect, long category) {
         mContext = context;
         dialogsType = type;
         folderId = folder;
+        categoryId = category;
         isOnlySelect = onlySelect;
         hasHints = folder == 0 && type == 0 && !onlySelect;
         selectedDialogs = new ArrayList<>();
@@ -141,8 +144,8 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
 
     @Override
     public int getItemCount() {
-        ArrayList<TLRPC.Dialog> array = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen);
-        if(array == null){
+        ArrayList<TLRPC.Dialog> array = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen, categoryId);
+        if (array == null) {
             array = new ArrayList<TLRPC.Dialog>();
         }
         int dialogsCount = array.size();
@@ -207,7 +210,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
         if (showArchiveHint) {
             i -= 2;
         }
-        ArrayList<TLRPC.Dialog> arrayList = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen);
+        ArrayList<TLRPC.Dialog> arrayList = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen, categoryId);
         if (hasHints) {
             int count = MessagesController.getInstance(currentAccount).hintDialogs.size();
             if (i < 2 + count) {
@@ -389,7 +392,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
                 view = new View(mContext) {
                     @Override
                     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-                        int size = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen).size();
+                        int size = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen, categoryId).size();
                         boolean hasArchive = MessagesController.getInstance(currentAccount).dialogs_dict.get(DialogObject.makeFolderDialogId(1)) != null;
                         int height;
                         if (size == 0 || !hasArchive) {
@@ -436,7 +439,16 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
                 } else {
                     cell.useSeparator = (i != getItemCount() - 1);
                 }
-                cell.fullSeparator = dialog.pinned && nextDialog != null && !nextDialog.pinned;
+
+                int category_id = (int) MessagesController.getInstance(currentAccount).getCategoryIdForDialog(dialog.id);
+                if (category_id != 0) {
+                    Category category = MessagesController.getInstance(currentAccount).categories_dict.get(category_id);
+                    cell.fullSeparator = category.getPinnedDialogs().contains(dialog.id)
+                            && nextDialog != null && !category.getPinnedDialogs().contains(nextDialog.id);
+                } else {
+                    cell.fullSeparator = (dialog.pinned || dialog instanceof Category) && nextDialog != null && !nextDialog.pinned && !(nextDialog instanceof Category);
+                }
+
                 if (dialogsType == 0) {
                     if (AndroidUtilities.isTablet()) {
                         cell.setDialogSelected(dialog.id == openedDialogId);
@@ -448,7 +460,13 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
             }
             case 5: {
                 DialogsEmptyCell cell = (DialogsEmptyCell) holder.itemView;
-                cell.setType(onlineContacts != null ? 1 : 0);
+                if (dialogsType == 8) {
+                    cell.setType(8);
+                } else if (dialogsType == 10) {
+                    cell.setType(10);
+                } else {
+                    cell.setType(onlineContacts != null ? 1 : 0);
+                }
                 break;
             }
             case 4: {
@@ -498,7 +516,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
                 i -= 2;
             }
         }
-        int size = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen).size();
+        int size = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen, categoryId).size();
         if (i == size) {
             if (!MessagesController.getInstance(currentAccount).isDialogsEndReached(folderId)) {
                 return 1;
@@ -515,9 +533,12 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter {
 
     @Override
     public void notifyItemMoved(int fromPosition, int toPosition) {
-        ArrayList<TLRPC.Dialog> dialogs = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, false);
+        ArrayList<TLRPC.Dialog> dialogs = DialogsActivity.getDialogsArray(currentAccount, dialogsType, folderId, false, categoryId);
         int fromIndex = fixPosition(fromPosition);
         int toIndex = fixPosition(toPosition);
+        if (dialogs == null || dialogs.isEmpty()) {
+            return;
+        }
         TLRPC.Dialog fromDialog = dialogs.get(fromIndex);
         TLRPC.Dialog toDialog = dialogs.get(toIndex);
         int oldNum = fromDialog.pinnedNum;

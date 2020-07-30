@@ -138,7 +138,7 @@ public class QuickRepliesSettingsActivity extends BaseFragment {
 				case 0: {
 					TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
 					cell.setBackgroundDrawable(Theme.getThemedDrawable(mContext, R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
-					cell.setText(LocaleController.getString("VoipQuickRepliesExplain", R.string.VoipQuickRepliesExplain));
+					cell.setText(LocaleController.getString("VoipQuickRepliesExplain", R.string.VoipQuickRepliesExplain, true));
 					break;
 				}
 				case 1: {

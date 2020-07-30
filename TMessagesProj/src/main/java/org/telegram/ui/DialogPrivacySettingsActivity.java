@@ -15,6 +15,7 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.os.Handler;
 import android.os.Vibrator;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -23,6 +24,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.DigitsKeyListener;
 import android.text.method.PasswordTransformationMethod;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.Gravity;
@@ -31,41 +33,43 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.telegram.localStorage.LockDialog;
+import org.telegram.localStorage.StorageRepository;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.R;
-import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.UserConfig;
-import org.telegram.messenger.Utilities;
-import org.telegram.messenger.support.fingerprint.FingerprintManagerCompat;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.ActionBarMenu;
 import org.telegram.ui.ActionBar.ActionBarMenuItem;
-import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ActionBar.ThemeDescription;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
-import org.telegram.ui.Components.AlertsCreator;
+import org.telegram.ui.Components.Category;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.LayoutHelper;
-import org.telegram.ui.Components.NumberPicker;
 import org.telegram.ui.Components.RecyclerListView;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class PasscodeActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.schedulers.Schedulers;
+
+public class DialogPrivacySettingsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
 
     private ListAdapter listAdapter;
     private RecyclerListView listView;
@@ -75,38 +79,49 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
     private ActionBarMenuItem dropDownContainer;
     private Drawable dropDownDrawable;
 
+    private CompositeDisposable disposables = new CompositeDisposable();
+    private StorageRepository localStorage =
+            StorageRepository.Companion.getInstance(ApplicationLoader.applicationContext);
+
+    //0 - for setting passcode
+    //1 - for repeating passcode
+    //2 - passcode is set
     private int type;
     private int currentPasswordType = 0;
     private int passcodeSetStep = 0;
     private String firstPassword;
 
-    private int badPasscodeTries;
-    private long lastPasscodeTry;
-
     private int passcodeRow;
     private int changePasscodeRow;
     private int passcodeDetailRow;
-    private int captureRow;
-    private int captureDetailRow;
-    private int fingerprintRow;
-    private int autoLockRow;
-    private int autoLockDetailRow;
+    private int hideRow;
+    private int hideDetailRow;
     private int rowCount;
+
+    private long idx;
+    private LockDialog dialog;
 
     private final static int done_button = 1;
     private final static int pin_item = 2;
     private final static int password_item = 3;
 
-    public PasscodeActivity(int type) {
+    private OnPasswordCorrectDelegate delegate;
+
+    public DialogPrivacySettingsActivity(int type, long id) {
         super();
         this.type = type;
+        this.idx = id;
+        this.dialog = getMessagesController().lockedDialogs_dict.get(id);
+        if (dialog == null) {
+            this.dialog = new LockDialog(id, "", false, 0);
+        }
     }
 
     @Override
     public boolean onFragmentCreate() {
         super.onFragmentCreate();
         updateRows();
-        if (type == 0 || type == 3) {
+        if (type == 0) {
             NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.didSetPasscode);
         }
         return true;
@@ -115,9 +130,10 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
     @Override
     public void onFragmentDestroy() {
         super.onFragmentDestroy();
-        if (type == 0 || type == 3) {
+        if (type == 0) {
             NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.didSetPasscode);
         }
+        disposables.clear();
     }
 
     @Override
@@ -157,7 +173,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
             titleTextView = new TextView(context);
             titleTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText6));
             if (type == 1) {
-                if (SharedConfig.passcodeHash.length() != 0) {
+                if (!dialog.getPasscode().isEmpty()) {
                     titleTextView.setText(LocaleController.getString("EnterNewPasscode", R.string.EnterNewPasscode));
                 } else {
                     titleTextView.setText(LocaleController.getString("EnterNewFirstPasscode", R.string.EnterNewFirstPasscode));
@@ -177,9 +193,6 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
             passwordEditText.setLines(1);
             passwordEditText.setGravity(Gravity.CENTER_HORIZONTAL);
             passwordEditText.setSingleLine(true);
-            if(type == 3){
-
-            }
             if (type == 1) {
                 passcodeSetStep = 0;
                 passwordEditText.setImeOptions(EditorInfo.IME_ACTION_NEXT);
@@ -217,7 +230,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 @Override
                 public void afterTextChanged(Editable s) {
                     if (passwordEditText.length() == 4) {
-                        if (type == 2 && SharedConfig.passcodeType == 0) {
+                        if (type == 2 && dialog.getPasscodeType() == 0) {
                             processDone();
                         } else if (type == 1 && currentPasswordType == 0) {
                             if (passcodeSetStep == 0) {
@@ -296,14 +309,13 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                     return;
                 }
                 if (position == changePasscodeRow) {
-                    presentFragment(new PasscodeActivity(1));
+                    presentFragment(new DialogPrivacySettingsActivity(1, idx));
                 } else if (position == passcodeRow) {
                     TextCheckCell cell = (TextCheckCell) view;
-                    if (SharedConfig.passcodeHash.length() != 0) {
-                        SharedConfig.passcodeHash = "";
-                        SharedConfig.appLocked = false;
-                        SharedConfig.saveConfig();
-                        getMediaDataController().buildShortcuts();
+                    if (dialog != null && !dialog.getPasscode().isEmpty()) {
+                        dialog.setPasscode("");
+                        dialog.setHidden(false);
+                        updateDialogPasscode(dialog);
                         int count = listView.getChildCount();
                         for (int a = 0; a < count; a++) {
                             View child = listView.getChildAt(a);
@@ -313,75 +325,14 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                                 break;
                             }
                         }
-                        cell.setChecked(SharedConfig.passcodeHash.length() != 0);
-                        NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.didSetPasscode);
+                        cell.setChecked(!dialog.getPasscode().isEmpty());
                     } else {
-                        presentFragment(new PasscodeActivity(1));
+                        presentFragment(new DialogPrivacySettingsActivity(1, idx));
                     }
-                } else if (position == autoLockRow) {
-                    if (getParentActivity() == null) {
-                        return;
-                    }
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-                    builder.setTitle(LocaleController.getString("AutoLock", R.string.AutoLock));
-                    final NumberPicker numberPicker = new NumberPicker(getParentActivity());
-                    numberPicker.setMinValue(0);
-                    numberPicker.setMaxValue(4);
-                    if (SharedConfig.autoLockIn == 0) {
-                        numberPicker.setValue(0);
-                    } else if (SharedConfig.autoLockIn == 60) {
-                        numberPicker.setValue(1);
-                    } else if (SharedConfig.autoLockIn == 60 * 5) {
-                        numberPicker.setValue(2);
-                    } else if (SharedConfig.autoLockIn == 60 * 60) {
-                        numberPicker.setValue(3);
-                    } else if (SharedConfig.autoLockIn == 60 * 60 * 5) {
-                        numberPicker.setValue(4);
-                    }
-                    numberPicker.setFormatter(value -> {
-                        if (value == 0) {
-                            return LocaleController.getString("AutoLockDisabled", R.string.AutoLockDisabled);
-                        } else if (value == 1) {
-                            return LocaleController.formatString("AutoLockInTime", R.string.AutoLockInTime, LocaleController.formatPluralString("Minutes", 1));
-                        } else if (value == 2) {
-                            return LocaleController.formatString("AutoLockInTime", R.string.AutoLockInTime, LocaleController.formatPluralString("Minutes", 5));
-                        } else if (value == 3) {
-                            return LocaleController.formatString("AutoLockInTime", R.string.AutoLockInTime, LocaleController.formatPluralString("Hours", 1));
-                        } else if (value == 4) {
-                            return LocaleController.formatString("AutoLockInTime", R.string.AutoLockInTime, LocaleController.formatPluralString("Hours", 5));
-                        }
-                        return "";
-                    });
-                    builder.setView(numberPicker);
-                    builder.setNegativeButton(LocaleController.getString("Done", R.string.Done), (dialog, which) -> {
-                        which = numberPicker.getValue();
-                        if (which == 0) {
-                            SharedConfig.autoLockIn = 0;
-                        } else if (which == 1) {
-                            SharedConfig.autoLockIn = 60;
-                        } else if (which == 2) {
-                            SharedConfig.autoLockIn = 60 * 5;
-                        } else if (which == 3) {
-                            SharedConfig.autoLockIn = 60 * 60;
-                        } else if (which == 4) {
-                            SharedConfig.autoLockIn = 60 * 60 * 5;
-                        }
-                        listAdapter.notifyItemChanged(position);
-                        UserConfig.getInstance(currentAccount).saveConfig(false);
-                    });
-                    showDialog(builder.create());
-                } else if (position == fingerprintRow) {
-                    SharedConfig.useFingerprint = !SharedConfig.useFingerprint;
-                    UserConfig.getInstance(currentAccount).saveConfig(false);
-                    ((TextCheckCell) view).setChecked(SharedConfig.useFingerprint);
-                } else if (position == captureRow) {
-                    SharedConfig.allowScreenCapture = !SharedConfig.allowScreenCapture;
-                    UserConfig.getInstance(currentAccount).saveConfig(false);
-                    ((TextCheckCell) view).setChecked(SharedConfig.allowScreenCapture);
-                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.didSetPasscode);
-                    if (!SharedConfig.allowScreenCapture) {
-                        AlertsCreator.showSimpleAlert(PasscodeActivity.this, LocaleController.getString("ScreenCaptureAlert", R.string.ScreenCaptureAlert));
-                    }
+                } else if (position == hideRow) {
+                    dialog.setHidden(!dialog.getHidden());
+                    updateDialogHidden(dialog);
+                    ((TextCheckCell) view).setChecked(dialog.getHidden());
                 }
             });
         }
@@ -395,9 +346,14 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         if (listAdapter != null) {
             listAdapter.notifyDataSetChanged();
         }
+        getFragmentView().setFocusable(true);
+        getFragmentView().setFocusableInTouchMode(true);
         if (type != 0) {
             AndroidUtilities.runOnUIThread(() -> {
                 if (passwordEditText != null) {
+                    passwordEditText.getParent().requestChildFocus(passwordEditText, passwordEditText);
+                    passwordEditText.setFocusable(true);
+                    passwordEditText.setFocusableInTouchMode(true);
                     passwordEditText.requestFocus();
                     AndroidUtilities.showKeyboard(passwordEditText);
                 }
@@ -410,6 +366,10 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.didSetPasscode) {
             if (type == 0) {
+                dialog = getMessagesController().lockedDialogs_dict.get(idx);
+                if (dialog == null) {
+                    dialog = new LockDialog(id, "", false, 0);
+                }
                 updateRows();
                 if (listAdapter != null) {
                     listAdapter.notifyDataSetChanged();
@@ -423,27 +383,12 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         passcodeRow = rowCount++;
         changePasscodeRow = rowCount++;
         passcodeDetailRow = rowCount++;
-        if (SharedConfig.passcodeHash.length() > 0) {
-            try {
-                if (Build.VERSION.SDK_INT >= 23) {
-                    FingerprintManagerCompat fingerprintManager = FingerprintManagerCompat.from(ApplicationLoader.applicationContext);
-                    if (fingerprintManager.isHardwareDetected()) {
-                        fingerprintRow = rowCount++;
-                    }
-                }
-            } catch (Throwable e) {
-                FileLog.e(e);
-            }
-            autoLockRow = rowCount++;
-            autoLockDetailRow = rowCount++;
-            captureRow = rowCount++;
-            captureDetailRow = rowCount++;
+        if (!dialog.getPasscode().isEmpty() && !getMessagesController().isDialogInCategory(dialog.getIdx())) {
+            hideRow = rowCount++;
+            hideDetailRow = rowCount++;
         } else {
-            captureRow = -1;
-            captureDetailRow = -1;
-            fingerprintRow = -1;
-            autoLockRow = -1;
-            autoLockDetailRow = -1;
+            hideRow = -1;
+            hideDetailRow = -1;
         }
     }
 
@@ -478,13 +423,13 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 dropDown.setText(LocaleController.getString("PasscodePassword", R.string.PasscodePassword));
             }
         }
-        if (type == 1 && currentPasswordType == 0 || type == 2 && SharedConfig.passcodeType == 0) {
+        if (type == 1 && currentPasswordType == 0 || type == 2 && dialog.getPasscodeType() == 0) {
             InputFilter[] filterArray = new InputFilter[1];
             filterArray[0] = new InputFilter.LengthFilter(4);
             passwordEditText.setFilters(filterArray);
             passwordEditText.setInputType(InputType.TYPE_CLASS_PHONE);
             passwordEditText.setKeyListener(DigitsKeyListener.getInstance("1234567890"));
-        } else if (type == 1 && currentPasswordType == 1 || type == 2 && SharedConfig.passcodeType == 1) {
+        } else if (type == 1 && currentPasswordType == 1 || type == 2 && dialog.getPasscodeType() == 1) {
             passwordEditText.setFilters(new InputFilter[0]);
             passwordEditText.setKeyListener(null);
             passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
@@ -526,46 +471,24 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 return;
             }
 
-            try {
-                SharedConfig.passcodeSalt = new byte[16];
-                Utilities.random.nextBytes(SharedConfig.passcodeSalt);
-                byte[] passcodeBytes = firstPassword.getBytes("UTF-8");
-                byte[] bytes = new byte[32 + passcodeBytes.length];
-                System.arraycopy(SharedConfig.passcodeSalt, 0, bytes, 0, 16);
-                System.arraycopy(passcodeBytes, 0, bytes, 16, passcodeBytes.length);
-                System.arraycopy(SharedConfig.passcodeSalt, 0, bytes, passcodeBytes.length + 16, 16);
-                SharedConfig.passcodeHash = Utilities.bytesToHex(Utilities.computeSHA256(bytes, 0, bytes.length));
-            } catch (Exception e) {
-                FileLog.e(e);
-            }
-
-            SharedConfig.allowScreenCapture = true;
-            SharedConfig.passcodeType = currentPasswordType;
-            SharedConfig.saveConfig();
-            getMediaDataController().buildShortcuts();
+            dialog.setPasscode(firstPassword);
+            updateDialogPasscode(dialog);
             finishFragment();
-            NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.didSetPasscode);
             passwordEditText.clearFocus();
             AndroidUtilities.hideKeyboard(passwordEditText);
         } else if (type == 2) {
-            if (SharedConfig.passcodeRetryInMs > 0) {
-                int value = Math.max(1, (int) Math.ceil(SharedConfig.passcodeRetryInMs / 1000.0));
-                Toast.makeText(getParentActivity(), LocaleController.formatString("TooManyTries", R.string.TooManyTries, LocaleController.formatPluralString("Seconds", value)), Toast.LENGTH_SHORT).show();
+            if (!dialog.getPasscode().equals(passwordEditText.getText().toString())) {
                 passwordEditText.setText("");
                 onPasscodeError();
                 return;
             }
-            if (!SharedConfig.checkPasscode(passwordEditText.getText().toString())) {
-                SharedConfig.increaseBadPasscodeTries();
-                passwordEditText.setText("");
-                onPasscodeError();
-                return;
+            if (delegate != null) {
+                delegate.proceedAction(idx);
+            } else {
+                passwordEditText.clearFocus();
+                AndroidUtilities.hideKeyboard(passwordEditText);
+                presentFragment(new DialogPrivacySettingsActivity(0, idx), true);
             }
-            SharedConfig.badPasscodeTries = 0;
-            SharedConfig.saveConfig();
-            passwordEditText.clearFocus();
-            AndroidUtilities.hideKeyboard(passwordEditText);
-            presentFragment(new PasscodeActivity(0), true);
         }
     }
 
@@ -606,7 +529,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
             int position = holder.getAdapterPosition();
-            return position == passcodeRow || position == fingerprintRow || position == autoLockRow || position == captureRow || SharedConfig.passcodeHash.length() != 0 && position == changePasscodeRow;
+            return position == passcodeRow || position == hideRow || !dialog.getPasscode().isEmpty() && position == changePasscodeRow;
         }
 
         @Override
@@ -640,11 +563,9 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 case 0: {
                     TextCheckCell textCell = (TextCheckCell) holder.itemView;
                     if (position == passcodeRow) {
-                        textCell.setTextAndCheck(LocaleController.getString("Passcode", R.string.Passcode), SharedConfig.passcodeHash.length() > 0, true);
-                    } else if (position == fingerprintRow) {
-                        textCell.setTextAndCheck(LocaleController.getString("UnlockFingerprint", R.string.UnlockFingerprint), SharedConfig.useFingerprint, true);
-                    } else if (position == captureRow) {
-                        textCell.setTextAndCheck(LocaleController.getString("ScreenCapture", R.string.ScreenCapture), SharedConfig.allowScreenCapture, false);
+                        textCell.setTextAndCheck(LocaleController.getString("Passcode", R.string.Passcode), !dialog.getPasscode().isEmpty(), true);
+                    } else if (position == hideRow) {
+                        textCell.setTextAndCheck(LocaleController.getString("HideCategoryDialog", R.string.HideCategoryDialog), dialog.getHidden(), false);
                     }
                     break;
                 }
@@ -652,44 +573,22 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                     TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
                     if (position == changePasscodeRow) {
                         textCell.setText(LocaleController.getString("ChangePasscode", R.string.ChangePasscode), false);
-                        if (SharedConfig.passcodeHash.length() == 0) {
+                        if (dialog.getPasscode().isEmpty()) {
                             textCell.setTag(Theme.key_windowBackgroundWhiteGrayText7);
                             textCell.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText7));
                         } else {
                             textCell.setTag(Theme.key_windowBackgroundWhiteBlackText);
                             textCell.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
                         }
-                    } else if (position == autoLockRow) {
-                        String val;
-                        if (SharedConfig.autoLockIn == 0) {
-                            val = LocaleController.formatString("AutoLockDisabled", R.string.AutoLockDisabled);
-                        } else if (SharedConfig.autoLockIn < 60 * 60) {
-                            val = LocaleController.formatString("AutoLockInTime", R.string.AutoLockInTime, LocaleController.formatPluralString("Minutes", SharedConfig.autoLockIn / 60));
-                        } else if (SharedConfig.autoLockIn < 60 * 60 * 24) {
-                            val = LocaleController.formatString("AutoLockInTime", R.string.AutoLockInTime, LocaleController.formatPluralString("Hours", (int) Math.ceil(SharedConfig.autoLockIn / 60.0f / 60)));
-                        } else {
-                            val = LocaleController.formatString("AutoLockInTime", R.string.AutoLockInTime, LocaleController.formatPluralString("Days", (int) Math.ceil(SharedConfig.autoLockIn / 60.0f / 60 / 24)));
-                        }
-                        textCell.setTextAndValue(LocaleController.getString("AutoLock", R.string.AutoLock), val, true);
-                        textCell.setTag(Theme.key_windowBackgroundWhiteBlackText);
-                        textCell.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
                     }
                     break;
                 }
                 case 2: {
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     if (position == passcodeDetailRow) {
-                        cell.setText(LocaleController.getString("ChangePasscodeInfo", R.string.ChangePasscodeInfo, true));
-                        if (autoLockDetailRow != -1) {
-                            cell.setBackgroundDrawable(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
-                        } else {
-                            cell.setBackgroundDrawable(Theme.getThemedDrawable(mContext, R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
-                        }
-                    } else if (position == autoLockDetailRow) {
-                        cell.setText(LocaleController.getString("AutoLockInfo", R.string.AutoLockInfo));
-                        cell.setBackgroundDrawable(Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
-                    } else if (position == captureDetailRow) {
-                        cell.setText(LocaleController.getString("ScreenCaptureInfo", R.string.ScreenCaptureInfo));
+                        cell.setText(LocaleController.getString("CategoryDialogPasscodeInfo", R.string.CategoryDialogPasscodeInfo));
+                    } else if (position == hideDetailRow) {
+                        cell.setText(LocaleController.getString("CategoryDialogHideInfo", R.string.CategoryDialogHideInfo));
                         cell.setBackgroundDrawable(Theme.getThemedDrawable(mContext, R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
                     }
                     break;
@@ -699,15 +598,59 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
 
         @Override
         public int getItemViewType(int position) {
-            if (position == passcodeRow || position == fingerprintRow || position == captureRow) {
+            if (position == passcodeRow || position == hideRow) {
                 return 0;
-            } else if (position == changePasscodeRow || position == autoLockRow) {
+            } else if (position == changePasscodeRow) {
                 return 1;
-            } else if (position == passcodeDetailRow || position == autoLockDetailRow || position == captureDetailRow) {
+            } else if (position == passcodeDetailRow || position == hideDetailRow) {
                 return 2;
             }
             return 0;
         }
+    }
+
+    private void updateDialogPasscode(LockDialog dialog) {
+        long userId = UserConfig.getInstance(currentAccount).getClientUserId();
+        dialog.setPasscodeType(currentPasswordType);
+        disposables.add(
+                localStorage.updateDialogPasscode(idx, userId, dialog)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(() -> {
+                                    if (dialog.getPasscode().isEmpty()) {
+                                        getMessagesController().lockedDialogs_dict.remove(dialog.getIdx());
+                                    } else {
+                                        getMessagesController().lockedDialogs_dict.put(dialog.getIdx(), dialog);
+                                        getMediaDataController().uninstallShortcut(dialog.getIdx(), true);
+                                    }
+                                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.didSetPasscode);
+                                    getMessagesController().refreshCategoriesDialogsMainList();
+                                    Log.d("Local Storage", "dialog " + dialog.getIdx() + "lock updated");
+                                }, Throwable::printStackTrace
+                        )
+        );
+    }
+
+    private void updateDialogHidden(LockDialog dialog) {
+        long userId = UserConfig.getInstance(currentAccount).getClientUserId();
+        disposables.add(
+                localStorage.updateDialogHidden(idx, userId, dialog.getHidden())
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(() -> {
+                                    getMessagesController().reloadDbLockedDialogs(true, false);
+                                    Log.d("Local Storage", "dialog " + dialog.getIdx() + "hidden updated");
+                                }, Throwable::printStackTrace
+                        )
+        );
+    }
+
+    public void setDelegate(OnPasswordCorrectDelegate delegate) {
+        this.delegate = delegate;
+    }
+
+    public interface OnPasswordCorrectDelegate {
+        void proceedAction(long id);
     }
 
     @Override

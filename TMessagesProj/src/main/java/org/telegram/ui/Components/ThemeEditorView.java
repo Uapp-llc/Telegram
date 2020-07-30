@@ -245,7 +245,7 @@ public class ThemeEditorView {
                         } else {
                             if (listView.getAdapter() != listAdapter) {
                                 int top = getCurrentTop();
-                                searchEmptyView.setText(LocaleController.getString("NoChats", R.string.NoChats));
+                                searchEmptyView.setText(LocaleController.getString("NoChats", R.string.NoChats, true));
                                 searchEmptyView.showTextView();
                                 listView.setAdapter(listAdapter);
                                 listAdapter.notifyDataSetChanged();

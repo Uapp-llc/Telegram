@@ -90,6 +90,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 
+import static org.telegram.messenger.NotificationsController.TYPE_CATEGORY;
+
 public class AlertsCreator {
 
     public static Dialog processError(int currentAccount, TLRPC.TL_error error, BaseFragment fragment, TLObject request, Object... args) {
@@ -314,7 +316,7 @@ public class AlertsCreator {
             return null;
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+        builder.setTitle(context.getString(R.string.AppName));
         builder.setMessage(text);
         builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
         if (updateApp) {
@@ -453,7 +455,7 @@ public class AlertsCreator {
             return null;
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(title == null ? LocaleController.getString("AppName", R.string.AppName) : title);
+        builder.setTitle(title == null ? context.getString(R.string.AppName) : title);
         builder.setMessage(text);
         builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
         return builder;
@@ -571,7 +573,7 @@ public class AlertsCreator {
         showCustomNotificationsDialog(parentFragment, did, globalType, categoryId, exceptions, currentAccount, callback, null);
     }
 
-    public static void showCustomNotificationsDialog(BaseFragment parentFragment, long did, int globalType,  long categoryId, ArrayList<NotificationsSettingsActivity.NotificationException> exceptions, int currentAccount, MessagesStorage.IntCallback callback, MessagesStorage.IntCallback resultCallback) {
+    public static void showCustomNotificationsDialog(BaseFragment parentFragment, long did, int globalType, long categoryId, ArrayList<NotificationsSettingsActivity.NotificationException> exceptions, int currentAccount, MessagesStorage.IntCallback callback, MessagesStorage.IntCallback resultCallback) {
         if (parentFragment == null || parentFragment.getParentActivity() == null) {
             return;
         }
@@ -629,10 +631,14 @@ public class AlertsCreator {
                     if (did != 0) {
                         SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                         SharedPreferences.Editor editor = preferences.edit();
+                        String categoryKeyPrefix = "";
+                        if (parentFragment.getMessagesController().isDialogInCategory(did)) {
+                            categoryKeyPrefix = "category_";
+                        }
                         if (defaultEnabled) {
-                            editor.remove("notify2_" + did);
+                            editor.remove(categoryKeyPrefix + "notify2_" + did);
                         } else {
-                            editor.putInt("notify2_" + did, 0);
+                            editor.putInt(categoryKeyPrefix + "notify2_" + did, 0);
                         }
                         MessagesStorage.getInstance(currentAccount).setDialogFlags(did, 0);
                         editor.commit();
@@ -672,18 +678,22 @@ public class AlertsCreator {
                     if (did != 0) {
                         SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                         SharedPreferences.Editor editor = preferences.edit();
+                        String categoryKeyPrefix = "";
+                        if (parentFragment.getMessagesController().isDialogInCategory(did)) {
+                            categoryKeyPrefix = "category_";
+                        }
                         long flags;
                         if (i == 4) {
                             if (!defaultEnabled) {
-                                editor.remove("notify2_" + did);
+                                editor.remove(categoryKeyPrefix + "notify2_" + did);
                                 flags = 0;
                             } else {
-                                editor.putInt("notify2_" + did, 2);
+                                editor.putInt(categoryKeyPrefix + "notify2_" + did, 2);
                                 flags = 1;
                             }
                         } else {
-                            editor.putInt("notify2_" + did, 3);
-                            editor.putInt("notifyuntil_" + did, untilTime);
+                            editor.putInt(categoryKeyPrefix + "notify2_" + did, 3);
+                            editor.putInt(categoryKeyPrefix + "notifyuntil_" + did, untilTime);
                             flags = ((long) untilTime << 32) | 1;
                         }
                         NotificationsController.getInstance(currentAccount).removeNotificationsForDialog(did);
@@ -1665,7 +1675,7 @@ public class AlertsCreator {
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getParentActivity());
-        builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+        builder.setTitle(fragment.getParentActivity().getString(R.string.AppName));
         builder.setMessage(LocaleController.formatString("FloodWaitTime", R.string.FloodWaitTime, timeString));
         builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), null);
         fragment.showDialog(builder.create(), true, null);
@@ -1676,7 +1686,7 @@ public class AlertsCreator {
             return;
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getParentActivity());
-        builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+        builder.setTitle(fragment.getParentActivity().getString(R.string.AppName));
         if (result == 1) {
             builder.setMessage(LocaleController.getString("ErrorSendRestrictedStickers", R.string.ErrorSendRestrictedStickers));
         } else if (result == 2) {
@@ -1700,7 +1710,7 @@ public class AlertsCreator {
             return;
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getParentActivity());
-        builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+        builder.setTitle(fragment.getParentActivity().getString(R.string.AppName));
         switch (error) {
             case "PEER_FLOOD":
                 builder.setMessage(LocaleController.getString("NobodyLikesSpam2", R.string.NobodyLikesSpam2));
@@ -1795,27 +1805,38 @@ public class AlertsCreator {
         fragment.showDialog(builder.create(), true, null);
     }
 
-    public static Dialog createColorSelectDialog(Activity parentActivity, final long dialog_id, final int globalType, long categoryId, final Runnable onSelect) {
+    public static Dialog createColorSelectDialog(Activity parentActivity, BaseFragment parentFragment, final long dialog_id, final int globalType, long categoryId, final Runnable onSelect) {
         int currentColor;
         SharedPreferences preferences = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
+        String categoryPrefix = "";
+        if (globalType == TYPE_CATEGORY) {
+            categoryPrefix = "category_";
+        }
         if (dialog_id != 0) {
-            if (preferences.contains("color_" + dialog_id)) {
-                currentColor = preferences.getInt("color_" + dialog_id, 0xff0000ff);
+            if (preferences.contains(categoryPrefix + "color_" + dialog_id)) {
+                currentColor = preferences.getInt(categoryPrefix + "color_" + dialog_id, 0xff0000ff);
             } else {
-                if ((int) dialog_id < 0) {
-                    currentColor = preferences.getInt("GroupLed", 0xff0000ff);
+                if (globalType == TYPE_CATEGORY) {
+                    int category_id = (int) MessagesController.getInstance(parentFragment.getCurrentAccount()).getCategoryIdForDialog(dialog_id);
+                    currentColor = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_LED, categoryId), 0xff0000ff);
                 } else {
-                    currentColor = preferences.getInt("MessagesLed", 0xff0000ff);
+                    if ((int) dialog_id < 0) {
+                        currentColor = preferences.getInt("GroupLed", 0xff0000ff);
+                    } else {
+                        currentColor = preferences.getInt("MessagesLed", 0xff0000ff);
+                    }
                 }
+
             }
+
         } else if (globalType == NotificationsController.TYPE_PRIVATE) {
             currentColor = preferences.getInt("MessagesLed", 0xff0000ff);
         } else if (globalType == NotificationsController.TYPE_GROUP) {
             currentColor = preferences.getInt("GroupLed", 0xff0000ff);
-        } else if (globalType == NotificationsController.TYPE_CHANNEL){
+        } else if (globalType == NotificationsController.TYPE_CHANNEL) {
             currentColor = preferences.getInt("ChannelLed", 0xff0000ff);
-        } else{
-            currentColor = preferences.getInt(String.format("CategoryLed_%d", categoryId), 0xff0000ff);
+        } else {
+            currentColor = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_LED, categoryId), 0xff0000ff);
         }
         final LinearLayout linearLayout = new LinearLayout(parentActivity);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
@@ -1852,15 +1873,20 @@ public class AlertsCreator {
             final SharedPreferences preferences1 = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
             SharedPreferences.Editor editor = preferences1.edit();
             if (dialog_id != 0) {
-                editor.putInt("color_" + dialog_id, selectedColor[0]);
+                if (globalType == TYPE_CATEGORY) {
+                    editor.putInt("category_color_" + dialog_id, selectedColor[0]);
+                } else {
+                    editor.putInt("color_" + dialog_id, selectedColor[0]);
+                }
             } else if (globalType == NotificationsController.TYPE_PRIVATE) {
                 editor.putInt("MessagesLed", selectedColor[0]);
             } else if (globalType == NotificationsController.TYPE_GROUP) {
                 editor.putInt("GroupLed", selectedColor[0]);
-            } if (globalType == NotificationsController.TYPE_CHANNEL){
+            }
+            if (globalType == NotificationsController.TYPE_CHANNEL) {
                 editor.putInt("ChannelLed", selectedColor[0]);
-            } else{
-                editor.putInt(String.format("CategoryLed_%d", categoryId), selectedColor[0]);
+            } else {
+                editor.putInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_LED, categoryId), selectedColor[0]);
             }
             editor.commit();
             if (onSelect != null) {
@@ -1871,15 +1897,20 @@ public class AlertsCreator {
             final SharedPreferences preferences12 = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
             SharedPreferences.Editor editor = preferences12.edit();
             if (dialog_id != 0) {
-                editor.putInt("color_" + dialog_id, 0);
+                if (globalType == TYPE_CATEGORY) {
+                    editor.putInt("category_color_" + dialog_id, 0);
+                } else {
+                    editor.putInt("color_" + dialog_id, 0);
+                }
             } else if (globalType == NotificationsController.TYPE_PRIVATE) {
                 editor.putInt("MessagesLed", 0);
             } else if (globalType == NotificationsController.TYPE_GROUP) {
                 editor.putInt("GroupLed", 0);
-            } if (globalType == NotificationsController.TYPE_CHANNEL){
+            }
+            if (globalType == NotificationsController.TYPE_CHANNEL) {
                 editor.putInt("ChannelLed", 0);
-            } else{
-                editor.putInt(String.format("CategoryLed_%d", categoryId), 0);
+            } else {
+                editor.putInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_LED, categoryId), 0);
             }
             editor.commit();
             if (onSelect != null) {
@@ -1890,7 +1921,11 @@ public class AlertsCreator {
             builder.setNegativeButton(LocaleController.getString("Default", R.string.Default), (dialog, which) -> {
                 final SharedPreferences preferences13 = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
                 SharedPreferences.Editor editor = preferences13.edit();
-                editor.remove("color_" + dialog_id);
+                if (globalType == TYPE_CATEGORY) {
+                    editor.remove("category_color_" + dialog_id);
+                } else {
+                    editor.remove("color_" + dialog_id);
+                }
                 editor.commit();
                 if (onSelect != null) {
                     onSelect.run();
@@ -2060,7 +2095,7 @@ public class AlertsCreator {
     public static AlertDialog.Builder createContactsPermissionDialog(final Activity parentActivity, final MessagesStorage.IntCallback callback) {
         AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
         builder.setTopImage(R.drawable.permissions_contacts, Theme.getColor(Theme.key_dialogTopBackground));
-        builder.setMessage(AndroidUtilities.replaceTags(LocaleController.getString("ContactsPermissionAlert", R.string.ContactsPermissionAlert)));
+        builder.setMessage(AndroidUtilities.replaceTags(LocaleController.getString("ContactsPermissionAlert", R.string.ContactsPermissionAlert, true)));
         builder.setPositiveButton(LocaleController.getString("ContactsPermissionAlertContinue", R.string.ContactsPermissionAlertContinue), (dialog, which) -> callback.run(1));
         builder.setNegativeButton(LocaleController.getString("ContactsPermissionAlertNotNow", R.string.ContactsPermissionAlertNotNow), (dialog, which) -> callback.run(0));
         return builder;
@@ -2137,8 +2172,12 @@ public class AlertsCreator {
         SharedPreferences preferences = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
         final int[] selected = new int[1];
         String[] descriptions;
+        String categoryPrefix = "";
+        if(globalType == TYPE_CATEGORY){
+            categoryPrefix = "category_";
+        }
         if (dialog_id != 0) {
-            selected[0] = preferences.getInt("priority_" + dialog_id, 3);
+            selected[0] = preferences.getInt(categoryPrefix + "priority_" + dialog_id, 3);
             if (selected[0] == 3) {
                 selected[0] = 0;
             } else if (selected[0] == 4) {
@@ -2165,8 +2204,8 @@ public class AlertsCreator {
                     selected[0] = preferences.getInt("priority_group", 1);
                 } else if (globalType == NotificationsController.TYPE_CHANNEL) {
                     selected[0] = preferences.getInt("priority_channel", 1);
-                } else{
-                    selected[0] = preferences.getInt(String.format("priority_category_%d", categoryId), 1);
+                } else {
+                    selected[0] = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_PRIORITY, categoryId), 1);
                 }
             }
             if (selected[0] == 4) {
@@ -2215,7 +2254,11 @@ public class AlertsCreator {
                     } else {
                         option = 1;
                     }
-                    editor.putInt("priority_" + dialog_id, option);
+                    if (globalType == TYPE_CATEGORY) {
+                        editor.putInt("category_priority_" + dialog_id, option);
+                    } else {
+                        editor.putInt("priority_" + dialog_id, option);
+                    }
                 } else {
                     int option;
                     if (selected[0] == 0) {
@@ -2236,9 +2279,9 @@ public class AlertsCreator {
                     } else if (globalType == NotificationsController.TYPE_CHANNEL) {
                         editor.putInt("priority_channel", option);
                         selected[0] = preferences.getInt("priority_channel", 1);
-                    } else{
-                        editor.putInt( String.format("priority_category_%d", categoryId), option);
-                        selected[0] = preferences.getInt( String.format("priority_category_%d", categoryId), 1);
+                    } else {
+                        editor.putInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_PRIORITY, categoryId), option);
+                        selected[0] = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_PRIORITY, categoryId), 1);
                     }
                 }
                 editor.commit();
@@ -2263,8 +2306,8 @@ public class AlertsCreator {
             selected[0] = preferences.getInt("popupGroup", 0);
         } else if (globalType == NotificationsController.TYPE_CHANNEL) {
             selected[0] = preferences.getInt("popupChannel", 0);
-        } else{
-            selected[0] = preferences.getInt(String.format("popupCategory_%d", categoryId), 0);
+        } else {
+            selected[0] = preferences.getInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_POPUP, categoryId), 0);
         }
         String[] descriptions = new String[]{
                 LocaleController.getString("NoPopup", R.string.NoPopup),
@@ -2295,8 +2338,8 @@ public class AlertsCreator {
                     editor.putInt("popupGroup", selected[0]);
                 } else if (globalType == NotificationsController.TYPE_CHANNEL) {
                     editor.putInt("popupChannel", selected[0]);
-                } else{
-                    editor.putInt(String.format("popupCategory_%d", categoryId), selected[0]);
+                } else {
+                    editor.putInt(String.format(Locale.US, NotificationsController.SHARED_KEY_CATEGORY_POPUP, categoryId), selected[0]);
                 }
                 editor.commit();
                 builder.getDismissRunnable().run();

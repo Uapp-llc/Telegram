@@ -193,11 +193,7 @@ public class ApplicationLoader extends MultiDexApplication {
     public static void startPushService() {
         SharedPreferences preferences = MessagesController.getGlobalNotificationsSettings();
         boolean enabled;
-        if (preferences.contains("pushService")) {
-            enabled = preferences.getBoolean("pushService", true);
-        } else {
-            enabled = MessagesController.getMainSettings(UserConfig.selectedAccount).getBoolean("keepAliveService", false);
-        }
+        enabled = preferences.getBoolean("pushService", true);
         if (enabled) {
             try {
                 applicationContext.startService(new Intent(applicationContext, NotificationsService.class));

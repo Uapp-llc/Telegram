@@ -210,7 +210,7 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
                     } else {
                         if (gridView.getAdapter() != listAdapter) {
                             int top = getCurrentTop();
-                            searchEmptyView.setText(LocaleController.getString("NoChats", R.string.NoChats));
+                            searchEmptyView.setText(LocaleController.getString("NoChats", R.string.NoChats, true));
                             searchEmptyView.showTextView();
                             gridView.setAdapter(listAdapter);
                             listAdapter.notifyDataSetChanged();
@@ -634,7 +634,7 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
         searchEmptyView = new EmptyTextProgressView(context);
         searchEmptyView.setShowAtCenter(true);
         searchEmptyView.showTextView();
-        searchEmptyView.setText(LocaleController.getString("NoChats", R.string.NoChats));
+        searchEmptyView.setText(LocaleController.getString("NoChats", R.string.NoChats, true));
         gridView.setEmptyView(searchEmptyView);
         containerView.addView(searchEmptyView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.LEFT, 0, 52, 0, 0));
 
@@ -1031,7 +1031,7 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
             ArrayList<TLRPC.Dialog> allDialogs = MessagesController.getInstance(currentAccount).getAllDialogs();
             for (int a = 0; a < allDialogs.size(); a++) {
                 TLRPC.Dialog dialog = allDialogs.get(a);
-                if (!(dialog instanceof TLRPC.TL_dialog)) {
+                if (!(dialog instanceof TLRPC.TL_dialog) || MessagesController.getInstance(currentCount).isDialogHidden(dialog.id)) {
                     continue;
                 }
                 int lower_id = (int) dialog.id;

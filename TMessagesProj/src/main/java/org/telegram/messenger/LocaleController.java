@@ -927,6 +927,21 @@ public class LocaleController {
         return localeInfo == null || TextUtils.isEmpty(localeInfo.name) ? getString("LanguageName", R.string.LanguageName) : localeInfo.name;
     }
 
+    private String getStringInternal(String key, int res, boolean replaceTelegram) {
+        String value = BuildVars.USE_CLOUD_STRINGS ? localeValues.get(key) : null;
+        if (value == null) {
+            try {
+                value = ApplicationLoader.applicationContext.getString(res);
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        }
+        if (value == null) {
+            value = "LOC_ERR:" + key;
+        }
+        return value.replace("Telegram", "Skintel");
+    }
+
     private String getStringInternal(String key, int res) {
         String value = BuildVars.USE_CLOUD_STRINGS ? localeValues.get(key) : null;
         if (value == null) {
@@ -951,6 +966,10 @@ public class LocaleController {
             }
         }
         return value;
+    }
+
+    public static String getString(String key, int res, boolean replaceTelegram) {
+        return getInstance().getStringInternal(key, res, replaceTelegram);
     }
 
     public static String getString(String key, int res) {

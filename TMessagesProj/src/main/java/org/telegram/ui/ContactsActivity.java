@@ -401,7 +401,15 @@ public class ContactsActivity extends BaseFragment implements NotificationCenter
                             Bundle args = new Bundle();
                             args.putInt("user_id", user.id);
                             if (MessagesController.getInstance(currentAccount).checkCanOpenChat(args, ContactsActivity.this)) {
-                                presentFragment(new ChatActivity(args), true);
+                                if(getMessagesController().lockedDialogs_dict.get(user.id) == null){
+                                    presentFragment(new ChatActivity(args), true);
+                                } else {
+                                    DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, user.id);
+                                    privacySettingsActivity.setDelegate(id -> {
+                                        presentFragment(new ChatActivity(args), true);
+                                    });
+                                    presentFragment(privacySettingsActivity);
+                                }
                             }
                         }
                     }
@@ -497,7 +505,15 @@ public class ContactsActivity extends BaseFragment implements NotificationCenter
                                 Bundle args = new Bundle();
                                 args.putInt("user_id", user.id);
                                 if (MessagesController.getInstance(currentAccount).checkCanOpenChat(args, ContactsActivity.this)) {
-                                    presentFragment(new ChatActivity(args), true);
+                                    if(getMessagesController().lockedDialogs_dict.get(user.id) == null){
+                                        presentFragment(new ChatActivity(args), true);
+                                    } else {
+                                        DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, user.id);
+                                        privacySettingsActivity.setDelegate(id -> {
+                                            presentFragment(new ChatActivity(args), true);
+                                        });
+                                        presentFragment(privacySettingsActivity);
+                                    }
                                 }
                             }
                         }
@@ -512,7 +528,7 @@ public class ContactsActivity extends BaseFragment implements NotificationCenter
                         }
                         AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
                         builder.setMessage(LocaleController.getString("InviteUser", R.string.InviteUser));
-                        builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                        builder.setTitle(getParentActivity().getString(R.string.AppName));
                         final String arg1 = usePhone;
                         builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), (dialogInterface, i) -> {
                             try {
@@ -632,7 +648,7 @@ public class ContactsActivity extends BaseFragment implements NotificationCenter
                     TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(channelId);
                     AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
                     if (ChatObject.canAddAdmins(chat)) {
-                        builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+                        builder.setTitle(getParentActivity().getString(R.string.AppName));
                         builder.setMessage(LocaleController.getString("AddBotAsAdmin", R.string.AddBotAsAdmin));
                         builder.setPositiveButton(LocaleController.getString("MakeAdmin", R.string.MakeAdmin), (dialogInterface, i) -> {
                             if (delegate != null) {
@@ -650,7 +666,7 @@ public class ContactsActivity extends BaseFragment implements NotificationCenter
                 }
             }
             AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-            builder.setTitle(LocaleController.getString("AppName", R.string.AppName));
+            builder.setTitle(getParentActivity().getString(R.string.AppName));
             String message = LocaleController.formatStringSimple(selectAlertString, UserObject.getUserName(user));
             EditTextBoldCursor editText = null;
             if (!user.bot && needForwardCount) {

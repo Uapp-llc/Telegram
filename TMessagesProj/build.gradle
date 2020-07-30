@@ -57,7 +57,7 @@ android {
     buildToolsVersion '29.0.2'
     ndkVersion "21.0.6113669"
 
-    defaultConfig.applicationId = "org.telegram.messenger"
+    defaultConfig.applicationId = "org.uapp.messenger"
 
     sourceSets.main.jniLibs.srcDirs = ['./jni/']
 
@@ -85,16 +85,16 @@ android {
     signingConfigs {
         debug {
             storeFile file("config/release.keystore")
-            storePassword "Password1"
-            keyAlias "root"
-            keyPassword "Password1"
+            storePassword "yourPassword"
+            keyAlias "yourPassword"
+            keyPassword "yourPassword"
         }
 
         release {
             storeFile file("config/release.keystore")
-            storePassword "Password1"
-            keyAlias "root"
-            keyPassword "Password1"
+            storePassword "yourPassword"
+            keyAlias "yourPassword"
+            keyPassword "yourPassword"
         }
     }
 
@@ -103,7 +103,6 @@ android {
             debuggable true
             jniDebuggable true
             signingConfig signingConfigs.debug
-            applicationIdSuffix ".beta"
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -146,17 +145,8 @@ android {
             manifestPlaceholders = [applicationClassName: "MultiDexApplicationLoader"]
         }
 
-        HA {
-            debuggable false
-            jniDebuggable false
-            signingConfig signingConfigs.debug
-            applicationIdSuffix ".beta"
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-
         release {
-            debuggable false
+            debuggable true
             jniDebuggable false
             signingConfig signingConfigs.release
             minifyEnabled true
@@ -176,10 +166,6 @@ android {
     sourceSets.debugMultidex {
         manifest.srcFile 'config/debug/AndroidManifest.xml'
         java.srcDirs = ['src/multidex/java']
-    }
-
-    sourceSets.HA {
-        manifest.srcFile 'config/debug/AndroidManifest.xml'
     }
 
     sourceSets.release {
@@ -334,7 +320,7 @@ android {
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionName "5.15.0"
         multiDexEnabled true
 

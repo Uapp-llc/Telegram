@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="AppName">Telegram</string>
-    <string name="AppNameBeta">Telegram Beta</string>
+    <string name="AppName">Skintel</string>
+    <string name="AppNameBeta">Skintel</string>
     <string name="LanguageName">Português (Brasil)</string>
     <string name="English">Inglês</string>
     <string name="LanguageNameInEnglish">Portuguese (Brazil)</string>
@@ -26,9 +26,9 @@
     <string name="SentAppCode">Enviamos o código para o app do **Telegram** em seu outro dispositivo.</string>
     <string name="SentAppCodeTitle">Confira suas mensagens no Telegram</string>
     <string name="SentSmsCodeTitle">Inserir código</string>
-    <string name="SentCallCode">Estamos ligando para o seu telefone **%1$s**.\n\nNão atenda, o Telegram processará tudo automaticamente.</string>
+    <string name="SentCallCode">Estamos ligando para o seu telefone **%1$s**.\n\nNão atenda, o Skintel processará tudo automaticamente.</string>
     <string name="SentCallOnly">Te ligaremos no **%1$s** para ditar o código.</string>
-    <string name="CallText">Telegram irá te ligar em %1$d:%2$02d</string>
+    <string name="CallText">Skintel irá te ligar em %1$d:%2$02d</string>
     <string name="SmsText">Vamos te enviar um SMS em %1$d:%2$02d</string>
     <string name="Calling">Estamos te ligando...</string>
     <string name="SendingSms">Enviando SMS...</string>
@@ -101,7 +101,7 @@
     <string name="PaymentFailed">Desculpe, o pagamento foi recusado.</string>
     <string name="PaymentConnectionFailed">Não foi possível encontrar o servidor de pagamento. Verifique sua conexão e tente novamente.</string>
     <string name="PaymentWarning">Atenção</string>
-    <string name="PaymentWarningText">Nem o Telegram, nem %1$s terão acesso ao número do seu cartão de crédito. Os detalhes do cartão de crédito serão tratados apenas pelo sistema de pagamentos, %2$s.\n\nPagamentos irão diretamente para o desenvolvedor de %1$s. O Telegram não pode prover qualquer garantia, então proceda por sua conta e risco. Em caso de problemas, contate o desenvolvedor de %1$s ou o seu banco.</string>
+    <string name="PaymentWarningText">Nem o Skintel, nem %1$s terão acesso ao número do seu cartão de crédito. Os detalhes do cartão de crédito serão tratados apenas pelo sistema de pagamentos, %2$s.\n\nPagamentos irão diretamente para o desenvolvedor de %1$s. O Telegram não pode prover qualquer garantia, então proceda por sua conta e risco. Em caso de problemas, contate o desenvolvedor de %1$s ou o seu banco.</string>
     <string name="PaymentPassword">Senha &amp; Email</string>
     <string name="PaymentPasswordTitle">Senha</string>
     <string name="PaymentPasswordEnter">Insira uma senha</string>
@@ -209,7 +209,7 @@
     <string name="Strike">Tachado</string>
     <string name="Underline">Sublinhado</string>
     <string name="Regular">Regular</string>
-    <string name="ContactsPermissionAlert">O **Telegram** precisa acessar seus contatos para que você possa se comunicar com seus amigos em todos os seus dispositivos. Seus contatos serão continuamente sincronizados na nuvem fortemente criptografada do Telegram.</string>
+    <string name="ContactsPermissionAlert">O **Skintel** precisa acessar seus contatos para que você possa se comunicar com seus amigos em todos os seus dispositivos. Seus contatos serão continuamente sincronizados na nuvem fortemente criptografada do Telegram.</string>
     <string name="ContactsPermissionAlertNotNow">AGORA NÃO</string>
     <string name="ContactsPermissionAlertContinue">CONTINUAR</string>
     <string name="YourContacts">Seus contatos no Telegram</string>
@@ -819,7 +819,7 @@
     <string name="OpenUrlOption1">Entrar em %1$s como %2$s</string>
     <string name="OpenUrlOption2">Permitir que **%1$s** me envie mensagens</string>
     <string name="CancelSending">Cancelar o envio</string>
-    <string name="BotPermissionGameAlert">Permitir que %1$s passe seu nome no Telegram e ID (não o seu número de telefone) para páginas que você abrir com esse bot?</string>
+    <string name="BotPermissionGameAlert">Permitir que %1$s passe seu nome no Skintel e ID (não o seu número de telefone) para páginas que você abrir com esse bot?</string>
     <string name="ReportSpamLocation">GRUPO SEM RELAÇÃO COM O LOCAL?</string>
     <string name="ReportUnrelatedGroup">Denunciar grupo sem relação</string>
     <string name="ReportUnrelatedGroupText">Por favor, nos diga se este grupo não está relacionado com este local:\n\n**%1$s**</string>
@@ -832,7 +832,7 @@
     <string name="AddContactChat">ADICIONAR CONTATO</string>
     <string name="AddContactFullChat">ADD %1$s A CONTATOS</string>
     <string name="ViewContact">VER CONTATO</string>
-    <string name="BlockUserAlert">Deseja bloquear as mensagens e chamadas de **%1$s** no Telegram?</string>
+    <string name="BlockUserAlert">Deseja bloquear as mensagens e chamadas de **%1$s** no Skintel?</string>
     <string name="ReportSpamAlert">Tem certeza de que deseja denunciar este usuário por spam?</string>
     <string name="ReportSpamAlertGroup">Tem certeza de que deseja denunciar este grupo por spam?</string>
     <string name="ReportSpamAlertChannel">Tem certeza de que deseja denunciar este canal por spam?</string>
@@ -1025,15 +1025,15 @@
     <string name="NotificationGroupKickMember">%1$s removeu %3$s do grupo %2$s</string>
     <string name="NotificationGroupKickYou">%1$s removeu você do grupo %2$s</string>
     <string name="NotificationGroupLeftMember">%1$s saiu do grupo %2$s</string>
-    <string name="NotificationContactJoined">%1$s entrou para o Telegram!</string>
+    <string name="NotificationContactJoined">%1$s entrou para o Skintel!</string>
     <string name="NotificationUnrecognizedDevice">%1$s,\nDetectamos que alguém acessou a sua conta a partir de um novo dispositivo em %2$s\n\nDispositivo: %3$s\nLocalização: %4$s\n\nSe não foi você, vá em Configurações &gt; Privacidade e Segurança &gt; Sessões Ativas, e termine essa sessão.\n\nSe você acha que alguém acessou a sua conta sem a sua permissão, você pode habilitar a Verificação em Duas Etapas nas configurações de Privacidade e Segurança.\n\nAtenciosamente,\nEquipe do Telegram.</string>
     <string name="NotificationContactNewPhoto">%1$s atualizou a foto do perfil</string>
     <string name="NotificationInvitedToGroupByLink">%1$s entrou para o grupo %2$s via link de convite</string>
     <string name="NotificationGroupFew">%1$s enviou %3$s ao grupo %2$s</string>
     <string name="NotificationGroupAlbum">%1$s enviou um álbum para o grupo %2$s</string>
     <string name="NotificationGroupForwardedFew">%1$s encaminhou %3$s ao grupo %2$s</string>
-    <string name="NotificationHiddenName">Telegram</string>
-    <string name="NotificationHiddenChatName">Telegram</string>
+    <string name="NotificationHiddenName">Skintel</string>
+    <string name="NotificationHiddenChatName">Skintel</string>
     <string name="NotificationHiddenChatUserName">Usuário</string>
     <string name="NotificationHiddenMessage">Nova mensagem</string>
     <string name="Reply">Responder</string>
@@ -1079,7 +1079,7 @@
     <string name="NotificationActionPinnedGeoLiveChannel">%1$s fixou uma localização em tempo real</string>
     <string name="NotificationActionPinnedGifChannel">%1$s fixou um GIF</string>
     <string name="NotificationActionPinnedMusicChannel">%1$s fixou um arquivo de áudio</string>
-    <string name="SecretChatName">Telegram</string>
+    <string name="SecretChatName">Skintel</string>
     <!--contacts view-->
     <string name="SelectContact">Selecione um Contato</string>
     <string name="SelectContacts">Selecionar Contatos</string>
@@ -1105,11 +1105,11 @@
     <string name="WithinAMonth">visto no último mês</string>
     <string name="ALongTimeAgo">visto há muito tempo</string>
     <string name="NewMessageTitle">Nova Mensagem</string>
-    <string name="InviteFriendsHelp">Selecione os contatos para convidá-los ao Telegram</string>
-    <string name="InviteToTelegram">CONVIDAR PARA O TELEGRAM</string>
-    <string name="ShareTelegram">Compartilhar Telegram...</string>
+    <string name="InviteFriendsHelp">Selecione os contatos para convidá-los ao Skintel</string>
+    <string name="InviteToTelegram">CONVIDAR PARA O SKINTEL</string>
+    <string name="ShareTelegram">Compartilhar Skintel...</string>
     <string name="UpdateContactsTitle">Atualizar contatos?</string>
-    <string name="UpdateContactsMessage">O Telegram detectou muitos contatos não sincronizados, deseja sincronizá-los agora? Escolha \'OK\' se você está usando seu próprio celular, cartão SIM e conta do Google.</string>
+    <string name="UpdateContactsMessage">O Skintel detectou muitos contatos não sincronizados, deseja sincronizá-los agora? Escolha \'OK\' se você está usando seu próprio celular, cartão SIM e conta do Google.</string>
     <string name="SortedByName">Listado por Nome</string>
     <string name="SortedByLastSeen">Listado por Visto por Último</string>
     <string name="AddContactByPhone">Adicionar %1$s</string>
@@ -1171,8 +1171,8 @@
     <string name="BlockContact">Bloquear usuário</string>
     <string name="BlockUser">Bloquear usuário</string>
     <string name="BlockUsers">Bloquear usuários</string>
-    <string name="BlockUserMessage">Deseja bloquear as mensagens e chamadas de **%1$s** no Telegram?</string>
-    <string name="BlockUsersMessage">Deseja bloquear as mensagens e chamadas de **%1$s** no Telegram?</string>
+    <string name="BlockUserMessage">Deseja bloquear as mensagens e chamadas de **%1$s** no Skintel?</string>
+    <string name="BlockUsersMessage">Deseja bloquear as mensagens e chamadas de **%1$s** no Skintel?</string>
     <string name="UserBlocked">Usuário bloqueado</string>
     <string name="UserUnblocked">Usuário desbloqueado</string>
     <string name="EditContact">Editar contato</string>
@@ -1227,7 +1227,7 @@
     <string name="UsernameInvalidShort">O nome de usuário deve ter pelo menos 5 caracteres.</string>
     <string name="UsernameInvalidLong">O nome de usuário não pode exceder 32 caracteres.</string>
     <string name="UsernameInvalidStartNumber">Desculpe, o nome de usuário não pode começar com um número.</string>
-    <string name="UsernameHelp">Você pode escolher um nome de usuário no **Telegram**. Assim, outras pessoas poderão te encontrar pelo nome de usuário e entrar em contato sem precisar saber seu número de telefone.\n\nVocê pode usar **a–z**, **0–9** e underline.\nO tamanho mínimo é de **5** caracteres.</string>
+    <string name="UsernameHelp">Você pode escolher um nome de usuário no **Skintel**. Assim, outras pessoas poderão te encontrar pelo nome de usuário e entrar em contato sem precisar saber seu número de telefone.\n\nVocê pode usar **a–z**, **0–9** e underline.\nO tamanho mínimo é de **5** caracteres.</string>
     <string name="UsernameHelpLink">Este link abre um chat com você:\n%1$s</string>
     <string name="UsernameChecking">Verificando nome de usuário...</string>
     <string name="UsernameAvailable">%1$s está disponível.</string>
@@ -1265,7 +1265,7 @@
     <string name="NoEmojiFound">Nenhum emoji encontrado</string>
     <string name="NoMasks">Nenhuma máscara</string>
     <string name="EmojiSuggestions">Sugestões de Emoji</string>
-    <string name="EmojiSuggestionsInfo">O **Telegram** permite que você encontre emojis por milhares de palavras-chave, mas sempre há algo faltando. Se você quiser sugerir uma nova substituição de emoji, você pode nos ajudar visitando:</string>
+    <string name="EmojiSuggestionsInfo">O **Skintel** permite que você encontre emojis por milhares de palavras-chave, mas sempre há algo faltando. Se você quiser sugerir uma nova substituição de emoji, você pode nos ajudar visitando:</string>
     <string name="EmojiSuggestionsUrl">https://translations.telegram.org/%1$s/emoji</string>
     <string name="Masks">Máscaras</string>
     <string name="MasksInfo">Você pode adicionar máscaras em fotos que você envia. Para isso, abra o editor de fotos antes de enviar uma foto.</string>
@@ -1533,7 +1533,7 @@
     <string name="LanguageUnofficial">Idiomas não oficiais</string>
     <string name="LanguageUnsupportedError">Esse idioma não existe.</string>
     <string name="LanguageSame">Você já está usando esse pacote de idiomas (**%1$s**). Você pode alterar seu idioma a qualquer momento em Configurações.</string>
-    <string name="LanguageUnknownCustomAlert">Infelizmente esse pacote de idiomas personalizado (**%1$s**) não contém dados para o Telegram no Android.</string>
+    <string name="LanguageUnknownCustomAlert">Infelizmente esse pacote de idiomas personalizado (**%1$s**) não contém dados para o Skintel no Android.</string>
     <string name="AskAQuestionInfo">Por favor, note que o Suporte do Telegram é feito por voluntários. Tentaremos responder o mais rápido possível, mas pode levar um tempo.\n\nDê uma olhada na página de <![CDATA[<a href=\"https://telegram.org/faq/br#questes-gerais\">Perguntas Frequentes</a>]]>: há dicas e soluções para a maioria dos <![CDATA[<a href=\"https://telegram.org/faq/br#soluo-de-problemas\">problemas</a>]]>.</string>
     <string name="AskButton">Perguntar</string>
     <string name="TelegramFAQ">Perguntas Frequentes</string>
@@ -1551,7 +1551,7 @@
     <string name="NotificationsService">Manter Serviço Ativo</string>
     <string name="NotificationsServiceInfo">Reinicia o app quando ele tiver sido fechado. Ative para notificações mais estáveis.</string>
     <string name="NotificationsServiceConnection">Conexão em Segundo Plano</string>
-    <string name="NotificationsServiceConnectionInfo">Mantém uma conexão de baixo impacto para que o Telegram receba notificações mais estáveis.</string>
+    <string name="NotificationsServiceConnectionInfo">Mantém uma conexão de baixo impacto para que o Skintel receba notificações mais estáveis.</string>
     <string name="SortBy">Listar Por</string>
     <string name="ImportContacts">Importar Contatos</string>
     <string name="SortFirstName">Primeiro nome</string>
@@ -1711,15 +1711,15 @@
     <string name="UseProxyTelegram">Proxy MTProto</string>
     <string name="UseProxyTelegramError">O proxy que você está usando não está configurado corretamente e será desabilitado. Por favor, encontre outro.</string>
     <string name="UseProxySponsor">Proxy patrocinado</string>
-    <string name="UseProxySponsorInfo">Esse canal é mostrado pelo seu servidor proxy. Para remover esse canal de sua lista de conversas, desative o proxy nas Configurações do Telegram.</string>
+    <string name="UseProxySponsorInfo">Esse canal é mostrado pelo seu servidor proxy. Para remover esse canal de sua lista de conversas, desative o proxy nas Configurações do Skintel.</string>
     <string name="UseProxyInfo">Configurações de proxy SOCKS5.</string>
     <string name="UseProxyTelegramInfo">Configurações de proxy MTProto.</string>
-    <string name="UseProxyTelegramInfo2">Este proxy pode mostrar um canal patrocinado em sua lista de conversas. Isso não revela nada do seu tráfego no Telegram.</string>
+    <string name="UseProxyTelegramInfo2">Este proxy pode mostrar um canal patrocinado em sua lista de conversas. Isso não revela nada do seu tráfego no Skintel.</string>
     <string name="UseProxyForCalls">Usar proxy para chamadas</string>
     <string name="UseProxyForCallsInfo">Servidores proxy podem diminuir a qualidade de suas chamadas.</string>
     <string name="ConnectingToProxyEnable">Ativar</string>
     <string name="LowDiskSpaceTitle">Atenção</string>
-    <string name="LowDiskSpaceMessage">Seu dispositivo está quase sem espaço. Para esvaziar um pouco, você pode configurar o Telegram para manter apenas mídias recentes.</string>
+    <string name="LowDiskSpaceMessage">Seu dispositivo está quase sem espaço. Para esvaziar um pouco, você pode configurar o Skintel para manter apenas mídias recentes.</string>
     <string name="LowDiskSpaceTitle2">Remover mídias após</string>
     <string name="LowDiskSpaceNeverRemove">Nunca remover</string>
     <string name="AutodownloadContacts">Contatos</string>
@@ -1730,7 +1730,7 @@
     <string name="AutodownloadSizeLimitUpTo">até %1$s</string>
     <string name="Streaming">Streaming</string>
     <string name="EnableStreaming">Streaming de Música e Vídeo</string>
-    <string name="EnableAllStreamingInfo">Alguns vídeos não podem ser transmitidos por stream. Ex.: todos os vídeos enviados via Android utilizando o Telegram 4.7 ou inferior.</string>
+    <string name="EnableAllStreamingInfo">Alguns vídeos não podem ser transmitidos por stream. Ex.: todos os vídeos enviados via Android utilizando o Skintel 4.7 ou inferior.</string>
     <string name="TapToChangePhone">Toque para alterar o número de telefone</string>
     <string name="Appearance">Aparência</string>
     <string name="StickersAndMasks">Stickers e Máscaras</string>
@@ -1782,12 +1782,12 @@
     <string name="AuthAnotherClientInfo1">Baixe o Telegram em *desktop.telegram.org* no seu computador.</string>
     <string name="AuthAnotherClientInfo2">Use o Telegram Desktop para obter o código QR.</string>
     <string name="AuthAnotherClientInfo3">Escaneie o código QR para conectar à sua conta.</string>
-    <string name="AuthAnotherClientUrl">Esse código pode ser usado para permitir que alguém faça login em sua conta do Telegram.\n\nPara confirmar o login no Telegram, acesse Configurações &gt; Dispositivos &gt; Ler Código QR e escaneie o código.</string>
+    <string name="AuthAnotherClientUrl">Esse código pode ser usado para permitir que alguém faça login em sua conta do Telegram.\n\nPara confirmar o login no Skintel, acesse Configurações &gt; Dispositivos &gt; Ler Código QR e escaneie o código.</string>
     <!--cache view-->
     <string name="LocalDatabase">Banco de Dados Local</string>
     <string name="LocalDatabaseClearTextTitle">Limpar base de dados local</string>
     <string name="LocalDatabaseClearText">Deseja mesmo limpar as mensagens em cache?</string>
-    <string name="LocalDatabaseInfo">Limpar o banco de dados local apagará todos os textos das mensagens em cache e compactará o banco de dados para economizar espaço. O Telegram precisa de alguns dados para trabalhar, então o tamanho do banco não vai chegar a zero.\n\nEssa operação pode demorar alguns minutos para ser concluída.</string>
+    <string name="LocalDatabaseInfo">Limpar o banco de dados local apagará todos os textos das mensagens em cache e compactará o banco de dados para economizar espaço. O Skintel precisa de alguns dados para trabalhar, então o tamanho do banco não vai chegar a zero.\n\nEssa operação pode demorar alguns minutos para ser concluída.</string>
     <string name="ClearMediaCache">Limpar Cache</string>
     <string name="CacheClear">Limpar</string>
     <string name="CalculatingSize">Calculando...</string>
@@ -1800,7 +1800,7 @@
     <string name="LocalCache">Outros arquivos</string>
     <string name="CacheEmpty">Vazio</string>
     <string name="KeepMedia">Manter Mídias</string>
-    <string name="KeepMediaInfo">Fotos, vídeos e outros arquivos da nuvem que você **não acessou** durante esse período serão removidos deste dispositivo para economizar espaço em disco.\n\nTodas as mídias permanecerão na nuvem do Telegram e poderão ser baixadas novamente conforme necessário.</string>
+    <string name="KeepMediaInfo">Fotos, vídeos e outros arquivos da nuvem que você **não acessou** durante esse período serão removidos deste dispositivo para economizar espaço em disco.\n\nTodas as mídias permanecerão na nuvem do Skintel e poderão ser baixadas novamente conforme necessário.</string>
     <string name="KeepMediaForever">Permanentemente</string>
     <string name="AudioAutodownload">Mensagens de voz</string>
     <string name="VideoMessagesAutodownload">Mensagens de vídeo</string>
@@ -1995,7 +1995,7 @@
     <string name="SessionsTitle">Sessões Ativas</string>
     <string name="CurrentSession">Sessão atual</string>
     <string name="NoOtherSessions">Nenhuma outra sessão ativa</string>
-    <string name="NoOtherSessionsInfo">Você pode entrar no Telegram em outros celulares, tablets e computadores usando o mesmo número de telefone. Todos os seus dados serão sincronizados.</string>
+    <string name="NoOtherSessionsInfo">Você pode entrar no Skintel em outros celulares, tablets e computadores usando o mesmo número de telefone. Todos os seus dados serão sincronizados.</string>
     <string name="OtherSessions">Sessões ativas</string>
     <string name="SessionsInfo">Controle suas sessões em outros dispositivos.</string>
     <string name="TerminateSessionInfo">Toque em uma sessão para terminá-la.</string>
@@ -2011,8 +2011,8 @@
     <string name="NoOtherWebSessions">Nenhum login ativo.</string>
     <string name="NoOtherWebSessionsInfo">Em sites compatíveis, você pode fazer o login com o Telegram.</string>
     <string name="OtherWebSessions">Sites conectados</string>
-    <string name="WebSessionsTitle">Entrou com o Telegram</string>
-    <string name="TerminateWebSessionInfo">Toque para desconectar de sua conta do Telegram.</string>
+    <string name="WebSessionsTitle">Entrou com o Skintel</string>
+    <string name="TerminateWebSessionInfo">Toque para desconectar de sua conta do Skintel.</string>
     <string name="TerminateWebSessionText">Deseja mesmo desconectar %1$s?</string>
     <string name="TerminateWebSessionTitle">Desconectar website</string>
     <string name="TerminateWebSessionsTitle">Desconectar websites</string>
@@ -2327,8 +2327,8 @@
     <string name="PrivacyPhone">Número de Telefone</string>
     <string name="PrivacyPhoneTitle">Quem pode ver meu número?</string>
     <string name="PrivacyPhoneTitle2">Quem pode me encontrar pelo meu número?</string>
-    <string name="PrivacyPhoneInfo">Usuários que já tiverem o seu número salvo nos contatos também irão ver no Telegram.</string>
-    <string name="PrivacyPhoneInfo3">Usuários que adicionarem o seu número aos contatos deles irão te ver no Telegram apenas se estiverem nos seus contatos também.</string>
+    <string name="PrivacyPhoneInfo">Usuários que já tiverem o seu número salvo nos contatos também irão ver no Skintel.</string>
+    <string name="PrivacyPhoneInfo3">Usuários que adicionarem o seu número aos contatos deles irão te ver no Skintel apenas se estiverem nos seus contatos também.</string>
     <string name="PrivacyPhoneInfo2">Você pode adicionar usuários ou grupos inteiros como exceções que substituirão as configurações acima.</string>
     <string name="PrivacyForwards">Mensagens Encaminhadas</string>
     <string name="PrivacyForwardsEverybody">Link para sua conta</string>
@@ -2501,7 +2501,7 @@
     <string name="ActionBotDocumentRentalAgreement">Contrato de Aluguel</string>
     <string name="ActionBotDocumentPhone">Número de Telefone</string>
     <string name="ActionBotDocumentEmail">Endereço de Email</string>
-    <string name="UnsupportedMedia">Esta mensagem não é compatível com a sua versão do Telegram. Atualize o aplicativo para visualizar: https://telegram.org/update</string>
+    <string name="UnsupportedMedia">Esta mensagem não é compatível com a sua versão do Skintel. Atualize o aplicativo para visualizar: https://telegram.org/update</string>
     <string name="AttachPhoto">Foto</string>
     <string name="AttachVideo">Vídeo</string>
     <string name="AttachDestructingPhoto">Foto Autodestrutiva</string>
@@ -2535,8 +2535,8 @@
     <string name="DeleteAllMessagesAlert">Aviso! Esta ação **apagará todas as mensagens** neste chat para **ambos** os participantes.</string>
     <string name="DeleteAll">Apagar Tudo</string>
     <string name="StopLoading">Parar de carregar?</string>
-    <string name="UpdateTelegram">Atualizar Telegram</string>
-    <string name="UpdateAppAlert">Desculpe, seu Telegram está desatualizado e não consegue atender a este pedido. Por favor, atualize o Telegram.</string>
+    <string name="UpdateTelegram">Atualizar Skintel</string>
+    <string name="UpdateAppAlert">Desculpe, seu Skintel está desatualizado e não consegue atender a este pedido. Por favor, atualize o Telegram.</string>
     <string name="InvalidPhoneNumber">Número de telefone inválido. Por favor, verifique o número e tente de novo.</string>
     <string name="PleaseLoginPassport">Por favor, entre com sua conta do Telegram para usar o Telegram Passport.</string>
     <string name="BannedPhoneNumber">Este número de telefone está banido.</string>
@@ -2626,10 +2626,10 @@
     <string name="SecretLinkPreviewAlert">Deseja ativar a prévia de links estendida em Chats Secretos? Note que a pré-visualização é gerada nos servidores do Telegram.</string>
     <string name="SecretChatContextBotAlert">Os bots inline são fornecidos por desenvolvedores terceiros. Para o bot funcionar, os símbolos que você digita depois do nome de usuário do bot são enviados para o respectivo desenvolvedor.</string>
     <string name="EditMessageError">Desculpe, você não pode editar essa mensagem.</string>
-    <string name="AllowReadCall">Permita o acesso às ligações ao Telegram, assim podemos automaticamente adicionar o código para você.</string>
-    <string name="AllowReadCallAndLog">Por favor, permita que o Telegram receba chamadas e leia o registro de chamadas para que possamos inserir automaticamente seu código para você.</string>
-    <string name="AllowReadCallLog">Por favor, permita que o Telegram leia o registro de chamadas para inserir automaticamente o seu código para você.</string>
-    <string name="AllowFillNumber">Por favor, permita que o Telegram receba chamadas. Assim podemos confirmar o seu número de telefone automaticamente.</string>
+    <string name="AllowReadCall">Permita o acesso às ligações ao Skintel, assim podemos automaticamente adicionar o código para você.</string>
+    <string name="AllowReadCallAndLog">Por favor, permita que o Skintel receba chamadas e leia o registro de chamadas para que possamos inserir automaticamente seu código para você.</string>
+    <string name="AllowReadCallLog">Por favor, permita que o Skintel leia o registro de chamadas para inserir automaticamente o seu código para você.</string>
+    <string name="AllowFillNumber">Por favor, permita que o Skintel receba chamadas. Assim podemos confirmar o seu número de telefone automaticamente.</string>
     <string name="UserRestricted">Você não tem permissão para isso.</string>
     <string name="YouBlockedUser">Desculpe, você bloqueou este usuário ou bot e por isso não pode adicioná-lo a grupos. Desbloqueie para prosseguir.</string>
     <string name="JoinGroup">ENTRAR NO GRUPO</string>
@@ -2642,11 +2642,11 @@
     <string name="ErrorSendRestrictedStickersAll">Desculpe, o envio de stickers não é permitido neste grupo.</string>
     <string name="ErrorSendRestrictedMediaAll">Desculpe, o envio de mídia não é permitido neste grupo.</string>
     <string name="ErrorSendRestrictedPollsAll">Desculpe, o envio de enquetes não é permitido neste grupo.</string>
-    <string name="TosDecline">Sentimos muito, mas isso significa que você não pode se cadastrar no Telegram.\n\nAo contrário de outros, não utilizamos seus dados para segmentação de anúncios ou outros fins comerciais. O Telegram armazena apenas as informações necessárias para funcionar como um serviço em nuvem, rico em recursos. Você pode ajustar como usamos seus dados nas configurações de Privacidade e Segurança.\n\nSe de forma geral você não concorda com os requisitos modestos do Telegram, não será possível te fornecer nosso serviço.</string>
+    <string name="TosDecline">Sentimos muito, mas isso significa que você não pode se cadastrar no Skintel.\n\nAo contrário de outros, não utilizamos seus dados para segmentação de anúncios ou outros fins comerciais. O Skintel armazena apenas as informações necessárias para funcionar como um serviço em nuvem, rico em recursos. Você pode ajustar como usamos seus dados nas configurações de Privacidade e Segurança.\n\nSe de forma geral você não concorda com os requisitos modestos do Skintel, não será possível te fornecer nosso serviço.</string>
     <string name="TosAgeTitle">Confirmação de Idade</string>
     <string name="PrivacyPolicyAndTerms">Política de Privacidade e Termos de Serviço</string>
     <string name="TosAgeText">Toque em Concordo para confirmar que você tem mais de %1$s anos.</string>
-    <string name="TosUpdateDecline">Sentimos muito, mas isso significa que devemos nos separar aqui. Ao contrário de outros, não utilizamos seus dados para segmentação de anúncios ou outros fins comerciais. O Telegram armazena apenas as informações necessárias para funcionar como um serviço em nuvem rico em recursos. Você pode ajustar como usamos seus dados nas configurações de Privacidade e Segurança.\n\nSe de forma geral você não concorda com os requisitos modestos do Telegram, não será possível te fornecer nossos serviços. Você pode apagar sua conta agora ou dar uma olhada e apaga-lá mais tarde se achar que não está satisfeito com o modo como usamos seus dados.</string>
+    <string name="TosUpdateDecline">Sentimos muito, mas isso significa que devemos nos separar aqui. Ao contrário de outros, não utilizamos seus dados para segmentação de anúncios ou outros fins comerciais. O Skintel armazena apenas as informações necessárias para funcionar como um serviço em nuvem rico em recursos. Você pode ajustar como usamos seus dados nas configurações de Privacidade e Segurança.\n\nSe de forma geral você não concorda com os requisitos modestos do Telegram, não será possível te fornecer nossos serviços. Você pode apagar sua conta agora ou dar uma olhada e apaga-lá mais tarde se achar que não está satisfeito com o modo como usamos seus dados.</string>
     <string name="TosDeclineDeleteAccount">Atenção, isso apagará irreversivelmente sua conta do Telegram, juntamente com todos os dados armazenados na nuvem do Telegram.\n\nImportante: em vez de perder tudo, você pode Cancelar agora e exportar seus dados antes de apagar a conta. Para fazer isso, abra o Telegram Desktop atualizado e vá em Configurações &gt; Exportar Dados do Telegram.</string>
     <!--permissions-->
     <string name="PermissionContacts">Para que você se conecte aos seus amigos em todos os dispositivos, seus contatos serão sincronizados continuamente com os servidores fortemente criptografados do Telegram.</string>
@@ -2660,18 +2660,18 @@
     <string name="PermissionOpenSettings">CONFIGURAÇÕES</string>
     <string name="PermissionXiaomiLockscreen">Por favor, permita que o Telegram seja mostrado na tela de bloqueio para que as chamadas possam funcionar corretamente.</string>
     <!--Intro view-->
-    <string name="Page1Title">Telegram</string>
+    <string name="Page1Title">Skintel</string>
     <string name="Page2Title">Rápido</string>
     <string name="Page3Title">Gratuito</string>
     <string name="Page4Title">Seguro</string>
     <string name="Page5Title">Poderoso</string>
     <string name="Page6Title">Baseado em nuvem</string>
     <string name="Page1Message">O aplicativo de mensagem mais **rápido** do mundo.\nÉ **gratuito** e **seguro**.</string>
-    <string name="Page2Message">O **Telegram** envia mensagens mais rápido que qualquer outro aplicativo.</string>
-    <string name="Page3Message">O **Telegram** será grátis para sempre.\nSem anúncios. Sem tarifas.</string>
-    <string name="Page4Message">O **Telegram** mantém suas mensagens\nseguras contra ataques de hackers.</string>
-    <string name="Page5Message">O **Telegram** não tem limites no tamanho de suas mídias e chats.</string>
-    <string name="Page6Message">O **Telegram** permite que você acesse suas mensagens\nem vários dispositivos.</string>
+    <string name="Page2Message">O **Skintel** envia mensagens mais rápido que qualquer outro aplicativo.</string>
+    <string name="Page3Message">O **Skintel** será grátis para sempre.\nSem anúncios. Sem tarifas.</string>
+    <string name="Page4Message">O **Skintel** mantém suas mensagens\nseguras contra ataques de hackers.</string>
+    <string name="Page5Message">O **Skintel** não tem limites no tamanho de suas mídias e chats.</string>
+    <string name="Page6Message">O **Skintel** permite que você acesse suas mensagens\nem vários dispositivos.</string>
     <string name="StartMessaging">Comece a Conversar</string>
     <!-- VoIP -->
     <string name="AccountSettings">Configurações de Conta</string>
@@ -2721,7 +2721,7 @@
     <string name="VoipPeerIncompatible">O aplicativo de **%1$s** está usando um protocolo incompatível. O aplicativo desse usuário precisa ser atualizado para que você possa chamá-lo.</string>
     <string name="VoipPeerOutdated">O aplicativo de **%1$s** não suporta chamadas. O aplicativo desse usuário precisa ser atualizado para que você possa chamá-lo.</string>
     <string name="VoipRateCallAlert">Avalie a qualidade de sua chamada no Telegram</string>
-    <string name="VoipNeedMicPermission">O Telegram precisa acessar seu microfone para poder fazer chamadas.</string>
+    <string name="VoipNeedMicPermission">O Skintel precisa acessar seu microfone para poder fazer chamadas.</string>
     <string name="VoipFeedbackCommentHint">Adicionar um comentário opcional</string>
     <string name="CallBack">Ligar de Volta</string>
     <string name="CallAgain">Ligar Novamente</string>

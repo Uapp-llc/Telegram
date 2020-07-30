@@ -45,7 +45,7 @@ public class DialogsEmptyCell extends LinearLayout {
 
         emptyTextView1 = new TextView(context);
         emptyTextView1.setTextColor(Theme.getColor(Theme.key_chats_nameMessage_threeLines));
-        emptyTextView1.setText(LocaleController.getString("NoChats", R.string.NoChats));
+        emptyTextView1.setText(LocaleController.getString("NoChats", R.string.NoChats, true));
         emptyTextView1.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
         emptyTextView1.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         emptyTextView1.setGravity(Gravity.CENTER);
@@ -66,17 +66,18 @@ public class DialogsEmptyCell extends LinearLayout {
 
     public void setType(int value) {
         currentType = value;
-        String help;
+        String help = "";
         if (currentType == 0) {
             help = LocaleController.getString("NoChatsHelp", R.string.NoChatsHelp);
-            if (AndroidUtilities.isTablet() && !AndroidUtilities.isSmallTablet()) {
-                help = help.replace('\n', ' ');
-            }
-        } else {
+        } else if(currentType == 8){
+            help = LocaleController.getString("NoChatsInCategoryHelp", R.string.NoChatsInCategoryHelp);
+        } else if(currentType == 10){
+            help = LocaleController.getString("NoCategoryHelp", R.string.NoCategoryHelp);
+        }else {
             help = LocaleController.getString("NoChatsContactsHelp", R.string.NoChatsContactsHelp);
-            if (AndroidUtilities.isTablet() && !AndroidUtilities.isSmallTablet()) {
-                help = help.replace('\n', ' ');
-            }
+        }
+        if (AndroidUtilities.isTablet() && !AndroidUtilities.isSmallTablet()) {
+            help = help.replace('\n', ' ');
         }
         emptyTextView2.setText(help);
     }
@@ -87,7 +88,7 @@ public class DialogsEmptyCell extends LinearLayout {
         if (totalHeight == 0) {
             totalHeight = AndroidUtilities.displaySize.y - ActionBar.getCurrentActionBarHeight() - (Build.VERSION.SDK_INT >= 21 ? AndroidUtilities.statusBarHeight : 0);
         }
-        if (currentType == 0) {
+        if (currentType == 0 || currentType == 8 || currentType == 10              ) {
             ArrayList<TLRPC.RecentMeUrl> arrayList = MessagesController.getInstance(currentAccount).hintDialogs;
             if (!arrayList.isEmpty()) {
                 totalHeight -= AndroidUtilities.dp(72) * arrayList.size() + arrayList.size() - 1 + AndroidUtilities.dp(12 + 38);

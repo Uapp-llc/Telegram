@@ -247,7 +247,16 @@ public class CallLogActivity extends BaseFragment implements NotificationCenter.
 			args.putInt("user_id", row.user.id);
 			args.putInt("message_id", row.calls.get(0).id);
 			NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.closeChats);
-			presentFragment(new ChatActivity(args), true);
+			if (getMessagesController().lockedDialogs_dict.get(row.user.id) == null) {
+				presentFragment(new ChatActivity(args), true);
+			} else {
+				DialogPrivacySettingsActivity privacySettingsActivity = new DialogPrivacySettingsActivity(2, row.user.id);
+				privacySettingsActivity.setDelegate(id -> {
+					privacySettingsActivity.removeSelfFromStack();
+					presentFragment(new ChatActivity(args), true);
+				});
+				presentFragment(privacySettingsActivity);
+			}
 		});
 		listView.setOnItemLongClickListener((view, position) -> {
 			if (position < 0 || position >= calls.size()) {
@@ -446,7 +455,7 @@ public class CallLogActivity extends BaseFragment implements NotificationCenter.
 		if (getParentActivity() == null)
 			return;
 		new AlertDialog.Builder(getParentActivity())
-				.setTitle(LocaleController.getString("AppName", R.string.AppName))
+				.setTitle(getParentActivity().getString(R.string.AppName))
 				.setMessage(LocaleController.getString("ConfirmDeleteCallLog", R.string.ConfirmDeleteCallLog))
 				.setPositiveButton(LocaleController.getString("Delete", R.string.Delete), (dialog, which) -> {
 					ArrayList<Integer> ids = new ArrayList<>();

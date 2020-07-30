@@ -33,6 +33,7 @@ import org.telegram.tgnet.TLRPC;
 import org.telegram.messenger.UserConfig;
 import org.telegram.ui.Components.AvatarDrawable;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.Category;
 import org.telegram.ui.NotificationsSettingsActivity;
 
 public class ProfileSearchCell extends BaseCell {
